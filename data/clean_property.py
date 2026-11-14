@@ -1,31 +1,22 @@
-"""Clean raw property listings (99aana + Hamrobazar) into one table: property.csv."""
-import json, re
+"""Clean raw property listings (99aana, Hamrobazar, Basobaas) into one table: property.csv.
+
+Inputs (any that exist):
+  raw_99aana_v2.jsonl            99aana pages (crawl_99aana.py); if absent, the 99aana rows of
+                                 property_listings.csv are re-used and only their places re-parsed
+  raw_hamrobazar_re_details.jsonl Hamrobazar detail pages (crawl_hamrobazar_details.js)
+  raw_basobaas.jsonl             Basobaas pages (crawl_basobaas.py)
+  property_listings.csv          previous cleaned table; rows whose raw file is gone are kept
+"""
+import json, os, re
+from collections import Counter
 import pandas as pd
 from nepal_units import area_sqft, npr, first_float, strip_phones, SQFT
+from places import split_address, locality_from_text, district_from_words, find_town, TERAI
 
 AANA = SQFT["aana"]
-DISTRICTS = {"kathmandu": "Kathmandu", "ktm": "Kathmandu", "lalitpur": "Lalitpur", "patan": "Lalitpur", "bhaktapur": "Bhaktapur",
-             "kaski": "Kaski", "pokhara": "Kaski", "chitwan": "Chitwan", "bharatpur": "Chitwan", "rupandehi": "Rupandehi",
-             "butwal": "Rupandehi", "bhairahawa": "Rupandehi", "morang": "Morang", "biratnagar": "Morang", "sunsari": "Sunsari",
-             "dharan": "Sunsari", "itahari": "Sunsari", "kavre": "Kavrepalanchok", "kavrepalanchok": "Kavrepalanchok",
-             "banepa": "Kavrepalanchok", "dhulikhel": "Kavrepalanchok", "makwanpur": "Makwanpur", "hetauda": "Makwanpur",
-             "nuwakot": "Nuwakot", "jhapa": "Jhapa", "kailali": "Kailali", "dhangadhi": "Kailali", "banke": "Banke", "nepalgunj": "Banke"}
-
-def norm_locality(s):
-    s = re.sub(r"[-\s]*\d+\b", "", s or "").strip(" ,.-")
-    s = re.sub(r"\b(municipality|nagarpalika|mahanagarpalika|metropolitan|city|ward|chowk|marga|road|tole)\b", "", s, flags=re.I)
-    return re.sub(r"\s+", " ", s).strip(" ,.-").title() or None
-
-def split_address(addr):
-    """'VS Colony, Pepsicola, Kathmandu' -> ('Pepsicola', 'Kathmandu')."""
-    parts = [p.strip() for p in re.split(r",", addr or "") if p.strip()]
-    district = None
-    for p in reversed(parts):
-        key = re.sub(r"[^a-z]", "", p.lower().split("-")[0])
-        if key in DISTRICTS:
-            district = DISTRICTS[key]; parts.remove(p); break
-    locality = norm_locality(parts[-1]) if parts else None
-    return locality, district
+DEFAULT_SCRAPED = pd.Timestamp("2026-10-09")
+COLS = ["source", "url", "title", "type", "locality", "city", "district", "address", "price_text", "area_text",
+        "floors", "road_ft", "rooms", "bathrooms", "listed"]
 
 def from_99aana(r):
     h = r.get("header") or []
@@ -43,67 +34,69 @@ def from_99aana(r):
     area_text = kv.get("Total Land Area") or kv.get("Area") or kv.get("Land Area")
     if not area_text and "sq m" in h:
         k = h.index("sq m"); area_text = h[k + 1] if k + 1 < len(h) else None
-    floors = first_float(kv.get("Floor") or kv.get("Floors"))
-    road = first_float(kv.get("Road"))
     rooms = first_float(h[h.index("Rooms") + 1]) if "Rooms" in h and h.index("Rooms") + 1 < len(h) else first_float(kv.get("Total no. of rooms"))
     baths = first_float(h[h.index("Bathrooms") + 1]) if "Bathrooms" in h and h.index("Bathrooms") + 1 < len(h) else first_float(kv.get("Total no. of Bathroom"))
-    loc, dist = split_address(addr)
-    return dict(source="99aana.com", url=r["url"], title=title, type=typ, locality=loc, district=dist, address=addr,
-                price_text=price_text, area_text=area_text, floors=floors, road_ft=road, rooms=rooms, bathrooms=baths,
-                listed=(r.get("published") or "")[:10])
+    return dict(source="99aana.com", url=r["url"], title=title, type=typ, address=addr, price_text=price_text, area_text=area_text,
+                floors=first_float(kv.get("Floor") or kv.get("Floors")), road_ft=first_float(kv.get("Road")), rooms=rooms,
+                bathrooms=baths, listed=(r.get("published") or "")[:10])
 
-TERAI = {"Chitwan", "Rupandehi", "Morang", "Sunsari", "Jhapa", "Kailali", "Banke", "Makwanpur"}
-SCRAPED = pd.Timestamp("2026-10-09")
-
-def posted_date(text):
+def posted_date(text, scraped):
     m = re.search(r"(\d+)\s*(minute|hour|day|week|month|year)", text or "")
     if not m:
-        return SCRAPED
+        return scraped
     n, u = int(m.group(1)), m.group(2)
-    days = {"minute": 0, "hour": 0, "day": 1, "week": 7, "month": 30, "year": 365}[u] * n
-    return SCRAPED - pd.Timedelta(days=days)
-
-def locality_from_title(title):
-    t = re.sub(r"[^\w\s,.-]", " ", title or "")
-    dist = None
-    for w in re.findall(r"[A-Za-z]+", t):
-        if w.lower() in DISTRICTS:
-            dist = DISTRICTS[w.lower()]
-    m = re.search(r"\b(?:at|in|@|near)\s+([A-Za-z][A-Za-z .-]{2,30}?)(?:,|\s+-|-?\s*\d|$|\s+(?:kathmandu|lalitpur|bhaktapur|ktm|pokhara|chitwan))", t, re.I)
-    loc = norm_locality(m.group(1)) if m else None
-    if loc and loc.lower() in DISTRICTS:
-        loc = None
-    return loc, dist
+    return scraped - pd.Timedelta(days={"minute": 0, "hour": 0, "day": 1, "week": 7, "month": 30, "year": 365}[u] * n)
 
 def from_hamrobazar(r):
     title = r.get("title") or ""
-    typ = "Land" if "/for-sale-land/" in r["url"] else "House"
-    loc, dist = locality_from_title(title)
-    spec = (r.get("specs") or {}).get("Land Size (Aana/Dhur)")
-    area_text = r.get("area_text")
-    if not area_text and spec:
-        unit = "dhur" if dist in TERAI else "aana"
-        area_text = f"{spec} {unit}"
-    return dict(source="hamrobazaar.com", url=r["url"], title=title, type=typ, locality=loc, district=dist, address=None,
-                price_text=r.get("price"), area_text=area_text, floors=first_float(r.get("storeys")), road_ft=first_float(r.get("road_ft")),
-                rooms=None, bathrooms=None, listed=str(posted_date(r.get("posted")).date()))
+    scraped = pd.Timestamp(r["scraped"][:10]) if r.get("scraped") else DEFAULT_SCRAPED
+    return dict(source="hamrobazaar.com", url=r["url"], title=title, type="Land" if "/for-sale-land/" in r["url"] else "House",
+                address=None, price_text=r.get("price"), area_text=r.get("area_text"),
+                spec_area=(r.get("specs") or {}).get("Land Size (Aana/Dhur)"), floors=first_float(r.get("storeys")),
+                road_ft=first_float(r.get("road_ft")), rooms=None, bathrooms=None,
+                listed=str(posted_date(r.get("posted"), scraped).date()))
+
+AREA_IN_TEXT = re.compile(r"(\d+(?:\.\d+)?\s*(?:ropani|aana|anna|ana|paisa|dam|daam|dhur|kattha|katha|kathha|bigha)\b(?:\s*\d+(?:\.\d+)?\s*(?:aana|anna|ana|paisa|dam|daam|dhur|kattha|katha))*)", re.I)
+
+def from_basobaas(r):
+    if r.get("purpose") != "Sale" or r.get("category") not in ("House", "Land"):
+        return None
+    title = r.get("title") or ""
+    area = (r.get("Land Area") or "").split("/")[0].strip()
+    area = re.sub(r"\b(daam)\b", "dam", re.sub(r"\b(kathha)\b", "kattha", area, flags=re.I), flags=re.I)
+    if not area_sqft(area):
+        m = AREA_IN_TEXT.search(title)
+        area = m.group(1) if m else (area if re.fullmatch(r"\d+(?:\.\d+)?", area) else None)  # bare number: unit decided later
+    unit = (r.get("price_unit") or "")
+    price_text = r.get("price") or ""
+    if unit.lower().startswith("per") and "month" not in unit.lower():
+        price_text += " " + unit
+    elif "month" in unit.lower():
+        return None
+    typ = r["category"]
+    if typ == "Land" and re.search(r"\bhouse\b", title, re.I) and not re.search(r"\bland\b", title, re.I):
+        typ = "House"
+    try:
+        listed = str(pd.to_datetime(r.get("updated"), format="%b %d, %Y").date())
+    except (TypeError, ValueError):
+        listed = ""
+    return dict(source="basobaas.com", url=r["url"], title=title, type=typ, address=r.get("address"), price_text=price_text,
+                area_text=area, floors=r.get("floors") or None, road_ft=first_float(r.get("Road Access In Feet")),
+                rooms=r.get("bedroom") or None, bathrooms=r.get("bathroom") or None, listed=listed)
 
 def merge_spellings(rows, cutoff=0.9):
     """Map near-identical locality spellings within a district onto the most common one
     (e.g. 'Bhiasepati' -> 'Bhaisepati', 'Budanilkantha' -> 'Budhanilkantha')."""
     import difflib
-    from collections import Counter
     by_d = {}
     for x in rows:
         if x["locality"]:
             by_d.setdefault(x["district"], Counter())[x["locality"]] += 1
-    # Different places whose names happen to be spelled alike.
     distinct = {frozenset({"Narayanthan", "Narayantar"}), frozenset({"Dhaneshwor", "Baneshwor"})}
     canon = {}
     for d, cnt in by_d.items():
-        names = [n for n, _ in cnt.most_common()]
         kept = []
-        for n in names:
+        for n, _ in cnt.most_common():
             key = n.lower().replace(" ", "").replace("h", "")
             match = next((k for k in kept if frozenset({n, k}) not in distinct and difflib.SequenceMatcher(None, key, k.lower().replace(" ", "").replace("h", "")).ratio() >= cutoff), None)
             canon[(d, n)] = match or n
@@ -114,20 +107,64 @@ def merge_spellings(rows, cutoff=0.9):
             x["locality"] = canon.get((x["district"], x["locality"]), x["locality"])
     return {k: v for k, v in canon.items() if k[1] != v}
 
-def finalize(rows):
-    # Fill a missing district from other listings of the same locality.
-    loc_dist = {}
+def place(rows):
+    """Assign locality / city / district. Structured addresses (99aana, Basobaas) first, then
+    learn a locality vocabulary from them for free-text titles (Hamrobazar)."""
+    for x in rows:
+        if x["source"] != "hamrobazaar.com":
+            x["locality"], x["city"], x["district"] = split_address(x["address"], x["title"])
+    known = {}
     for x in rows:
         if x["locality"] and x["district"]:
-            loc_dist.setdefault(x["locality"], []).append(x["district"])
+            known.setdefault(x["locality"].lower(), Counter())[x["district"]] += 1
+    known = {k: c.most_common(1)[0][0] for k, c in known.items() if c.most_common(1)[0][1] >= 2}
+    vocab = {k: (k.title(), d) for k, d in known.items()}
     for x in rows:
-        if x["locality"] and not x["district"] and x["locality"] in loc_dist:
-            x["district"] = max(set(loc_dist[x["locality"]]), key=loc_dist[x["locality"]].count)
+        if x["source"] != "hamrobazaar.com" and not x["district"]:
+            x["locality"], x["city"], x["district"] = split_address(x["address"], x["title"], known)
+        if x["source"] != "hamrobazaar.com" and not x["district"]:
+            text = f'{x["address"] or ""} , {x["title"]}'
+            loc, dist = locality_from_text(text, vocab)
+            x["district"] = dist or district_from_words(text, known)
+    for x in rows:
+        if x["source"] == "hamrobazaar.com":
+            loc, dist = locality_from_text(x["title"], vocab)
+            town = find_town(x["title"])
+            _, _, d2 = split_address(None, x["title"])
+            x["district"] = d2 or dist
+            x["locality"] = loc if loc and dist == x["district"] else (town[0] if town and town[1] == x["district"] else None)
+            x["city"] = town[0] if town and town[1] == x["district"] and x["district"] not in ("Kathmandu", "Lalitpur", "Bhaktapur") else None
+    # Outside the Valley a locality is often just the town itself.
+    for x in rows:
+        if x["city"] and not x["locality"]:
+            x["locality"] = x["city"]
+
+def finalize(rows):
+    place(rows)
     merged = merge_spellings(rows)
-    print("merged spellings:", len(merged), list(merged.items()))
+    print("merged spellings:", len(merged))
+    # A rare locality (a tole) gives the model nothing; if the title or address also names a
+    # well-covered locality of the same district ("Shital Height, Imadol"), use that instead.
+    cnt = Counter((x["district"], x["locality"]) for x in rows if x["locality"])
+    common = {}
+    for (d, l), n in cnt.items():
+        if n >= 6 and d:
+            common.setdefault(d, {})[l.lower()] = (l, d)
+    for x in rows:
+        if x["district"] in common and cnt.get((x["district"], x["locality"]), 0) < 4:
+            loc, _ = locality_from_text(f'{x["address"] or ""} , {x["title"]}', common[x["district"]])
+            if loc:
+                x["locality"] = loc
     out = []
     for x in rows:
-        sqft = area_sqft(x["area_text"])
+        area_text = x["area_text"]
+        spec = x.pop("spec_area", None)
+        if not area_text and spec:
+            area_text = f"{spec} {'dhur' if x['district'] in TERAI else 'aana'}"
+        if area_text and re.fullmatch(r"\d+(?:\.\d+)?", str(area_text).strip()):
+            area_text = f"{area_text} {'dhur' if x['district'] in TERAI else 'aana'}"
+        x["area_text"] = area_text
+        sqft = area_sqft(area_text)
         price, per = npr(x["price_text"])
         if price and price < 10000:          # shorthand in lakh: "270" -> 270 lakh
             price *= 1e5
@@ -139,21 +176,44 @@ def finalize(rows):
         aana = sqft / AANA
         x.update(price_npr=round(price), area_aana=round(aana, 3), price_per_aana=round(price / aana), title=strip_phones(x["title"]))
         out.append(x)
-    return pd.DataFrame(out)
+    df = pd.DataFrame(out)
+    # The same property is often re-posted on a site under a new URL: keep the newest copy.
+    df = df.sort_values("listed", ascending=False)
+    df = df.drop_duplicates(subset=["url"]).drop_duplicates(subset=["source", "type", "district", "locality", "price_npr", "area_aana"])
+    return df.sort_values(["source", "listed"]).reset_index(drop=True)
+
+def load_jsonl(path):
+    return [json.loads(l) for l in open(path)] if os.path.exists(path) else []
 
 if __name__ == "__main__":
-    import os
-    raw = [json.loads(l) for l in open("raw_99aana_v2.jsonl")]
-    rows = [from_99aana(r) for r in raw]
-    if os.path.exists("raw_hamrobazar_re_details.jsonl"):
-        hb = [json.loads(l) for l in open("raw_hamrobazar_re_details.jsonl")]
-        rows += [from_hamrobazar(r) for r in hb if r.get("title")]
-        raw += hb
+    rows, have_raw = [], set()
+    for r in load_jsonl("raw_99aana_v2.jsonl"):
+        rows.append(from_99aana(r)); have_raw.add("99aana.com")
+    for r in load_jsonl("raw_hamrobazar_re_details.jsonl"):
+        if r.get("title"):
+            rows.append(from_hamrobazar(r))
+    for r in load_jsonl("raw_basobaas.jsonl"):
+        x = from_basobaas(r)
+        if x:
+            rows.append(x)
+    # Keep earlier cleaned rows whose raw pages are no longer on disk (e.g. 99aana, which
+    # has stopped adding listings, and older Hamrobazar posts that have since expired).
+    seen = {x["url"] for x in rows}
+    if os.path.exists("property_listings.csv"):
+        old = pd.read_csv("property_listings.csv", dtype=str, keep_default_na=False)
+        for r in old.to_dict("records"):
+            if r["url"] in seen or r["source"] in have_raw:
+                continue
+            x = {c: (r.get(c) or None) for c in COLS}
+            x["address"] = x["address"] if x["address"] and not x["address"].startswith("Rs") else None
+            x["floors"], x["road_ft"] = first_float(x["floors"]), first_float(x["road_ft"])
+            if x["source"] == "hamrobazaar.com":    # area/price were already parsed
+                x["area_text"] = x["area_text"] or (f"{float(r['area_aana'])} aana" if r.get("area_aana") else None)
+            rows.append(x)
     df = finalize(rows)
-    print(len(raw), "raw ->", len(df), "usable")
-    print(df.district.value_counts(dropna=False).head(12))
-    print(df[["type", "locality", "district", "price_npr", "area_aana", "price_per_aana", "floors", "road_ft", "listed"]].sample(12, random_state=1).to_string())
-    print(df.groupby(["district", "type"]).price_per_aana.median().round(-3).head(20))
-    df = df.drop_duplicates(subset=["url"])
+    print(len(rows), "raw ->", len(df), "usable")
+    print(df.source.value_counts().to_string())
+    print(df.district.value_counts(dropna=False).head(30).to_string())
+    print(df.groupby(["district", "type"]).price_per_aana.median().round(-3).head(30))
     df.to_csv("property.csv", index=False)
     print("wrote property.csv", len(df))

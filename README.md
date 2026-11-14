@@ -47,8 +47,9 @@ The regression is kept because it is as accurate as gradient boosting here, ever
 | Path | What it is |
 | --- | --- |
 | `web/` | The app: `index.html`, `app.js`, `predict.js`, `style.css`, plus `model.json` and `listings.json` |
-| `data/crawl_99aana.py`, `data/crawl_hamrobazar*.js` | Polite crawlers (robots.txt-compliant, rate-limited, no personal data) |
-| `data/clean_property.py`, `data/nepal_units.py` | Parsing of Nepali prices, land units, addresses and years |
+| `data/crawl_99aana.py`, `data/crawl_basobaas.py`, `data/crawl_hamrobazar*.js` | Polite crawlers (robots.txt-compliant, rate-limited, no personal data) |
+| `data/clean_property.py`, `data/nepal_units.py` | Parsing of Nepali prices, land units and years; merging of the sources |
+| `data/places.py` | Gazetteer of districts, towns and Valley localities used to place each listing |
 | `data/train_property_model.py` | Model training and cross-validation |
 | `data/export_property_web.py` | Writes `web/model.json` and `web/listings.json` |
 | `data/property_listings.csv` | The cleaned dataset |
@@ -59,10 +60,14 @@ The regression is kept because it is as accurate as gradient boosting here, ever
 ```bash
 cd data
 python crawl_99aana.py                       # needs urls_99aana.txt from the 99aana property sitemaps
+python crawl_basobaas.py urls_basobaas.txt raw_basobaas.jsonl   # property URLs from basobaas.com/sitemap.xml
 node crawl_hamrobazar.js '/detail/for-sale-(house|land)/' raw_hamrobazar_realestate.jsonl "house sale kathmandu" ...
 node crawl_hamrobazar_details.js raw_hamrobazar_realestate.jsonl raw_hamrobazar_re_details.jsonl
-python clean_property.py && python train_property_model.py && python export_property_web.py ../web
+python clean_property.py && cp property.csv property_listings.csv
+python train_property_model.py && python export_property_web.py ../web
 ```
+
+`clean_property.py` re-uses rows of `property_listings.csv` whose raw files are not on disk, so a refresh can add one source without re-crawling the others.
 
 Pushing to `main` republishes the site via `.github/workflows/pages.yml`.
 

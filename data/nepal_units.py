@@ -3,9 +3,10 @@ import re
 
 SQFT = {"ropani": 5476.0, "aana": 342.25, "paisa": 85.5625, "dam": 21.390625,
         "bigha": 72900.0, "kattha": 3645.0, "dhur": 182.25, "sqft": 1.0, "sqm": 10.7639}
-UNIT_ALIASES = {"ropani": "ropani", "aana": "aana", "ana": "aana", "anna": "aana", "paisa": "paisa", "dam": "dam",
-                "bigha": "bigha", "kattha": "kattha", "katha": "kattha", "kaththa": "kattha", "dhur": "dhur",
-                "sq ft": "sqft", "sqft": "sqft", "sq. ft": "sqft", "square feet": "sqft", "sq m": "sqm", "sqm": "sqm"}
+UNIT_ALIASES = {"ropani": "ropani", "aana": "aana", "ana": "aana", "anna": "aana", "paisa": "paisa", "dam": "dam", "daam": "dam",
+                "bigha": "bigha", "kattha": "kattha", "katha": "kattha", "kaththa": "kattha", "kathha": "kattha", "dhur": "dhur",
+                "sq ft": "sqft", "sqft": "sqft", "sq. ft": "sqft", "square feet": "sqft", "sq m": "sqm", "sqm": "sqm",
+                "square meters": "sqm", "square meter": "sqm", "square metres": "sqm", "sq. m": "sqm", "sq.m": "sqm"}
 UNIT_RE = "|".join(sorted((re.escape(k) for k in UNIT_ALIASES), key=len, reverse=True))
 
 def area_sqft(text):

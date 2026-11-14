@@ -1,7 +1,8 @@
 "use strict";
 const el = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const TERAI = new Set(["Chitwan", "Rupandehi", "Morang", "Sunsari", "Jhapa", "Kailali", "Banke", "Makwanpur"]);
+let TERAI = new Set(["Chitwan", "Rupandehi", "Morang", "Sunsari", "Jhapa", "Kailali", "Banke", "Makwanpur"]);
+const VALLEY = new Set(["Kathmandu", "Lalitpur", "Bhaktapur"]);
 const SQFT = { ropani: 5476, aana: 342.25, paisa: 85.5625, dam: 21.390625, bigha: 72900, kattha: 3645, dhur: 182.25 };
 
 // Nepali number style: crore / lakh.
@@ -10,7 +11,7 @@ function npr(v, digits = 2) {
   if (v >= 1e5) return `Rs ${(v / 1e5).toFixed(digits - 1 < 0 ? 0 : digits - 1).replace(/\.?0+$/, "")} lakh`;
   return "Rs " + Math.round(v).toLocaleString("en-IN");
 }
-const nprShort = v => v >= 1e7 ? (v / 1e7).toFixed(1).replace(/\.0$/, "") + " Cr" : (v / 1e5).toFixed(0) + " L";
+const nprShort = v => v >= 1e7 ? (v / 1e7).toFixed(1).replace(/\.0$/, "") + " Cr" : v >= 1e5 ? (v / 1e5).toFixed(v < 1e6 ? 1 : 0).replace(/\.0$/, "") + " L" : Math.round(v / 1e3) + "K";
 
 const tip = el("tooltip");
 function showTip(e, title, rows) {
@@ -39,24 +40,30 @@ const state = { type: "House", district: "Kathmandu", locality: "", road_ft: 13,
 Promise.all([fetch("model.json").then(r => r.json()), fetch("listings.json").then(r => r.json())]).then(([m, l]) => { M = m; L = l; init(); });
 
 function init() {
+  if (M.terai) TERAI = new Set(M.terai);
   renderKPIs();
   chips("type", ["House", "Land"], state.type, v => { state.type = v; el("storey-field").hidden = v !== "House"; update(); renderMarket(); });
   const dcounts = {};
   L.forEach(r => { dcounts[r.district] = (dcounts[r.district] || 0) + 1; });
   const districts = M.districts.filter(d => d !== "Other" && (dcounts[d] || 0) >= 5).sort((a, b) => dcounts[b] - dcounts[a]);
-  chips("district", districts, state.district, v => { state.district = v; fillLocalities(); toggleUnits(); update(); });
+  const opt = d => `<option value="${esc(d)}"${d === state.district ? " selected" : ""}>${esc(d)} (${dcounts[d].toLocaleString("en-IN")})</option>`;
+  el("district").innerHTML = `<optgroup label="Kathmandu Valley">${districts.filter(d => VALLEY.has(d)).map(opt).join("")}</optgroup>` +
+    `<optgroup label="Outside the Valley">${districts.filter(d => !VALLEY.has(d)).map(opt).join("")}</optgroup>`;
+  el("district").addEventListener("change", e => { state.district = e.target.value; fillLocalities(); toggleUnits(); update(); });
   fillLocalities(); toggleUnits();
   el("locality").addEventListener("change", e => { state.locality = e.target.value; update(); });
   document.querySelectorAll(".area-inputs input").forEach(i => i.addEventListener("input", update));
   el("road").addEventListener("input", e => { state.road_ft = +e.target.value; el("road-o").textContent = e.target.value + " ft"; update(); });
   el("storeys").addEventListener("input", e => { state.storeys = +e.target.value; el("st-o").textContent = e.target.value; update(); });
   chips("mkt-type", ["House", "Land"], "House", v => { mktType = v; renderMarket(); });
+  chips("mkt-region", ["All of Nepal", "Kathmandu Valley", "Outside the Valley"], mktRegion, v => { mktRegion = v; renderMarket(); });
+  chips("hot-type", ["Land", "House"], hotType, v => { hotType = v; renderHotspots(); });
   document.querySelectorAll("[data-table-toggle]").forEach(btn => btn.addEventListener("click", () => {
     const t = el(btn.dataset.tableToggle + "-table"); t.hidden = !t.hidden; btn.textContent = t.hidden ? "Show table" : "Hide table";
   }));
   renderAbout();
-  update(); renderMarket();
-  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { update(); renderMarket(); }, 120); });
+  update(); renderMarket(); renderHotspots();
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { update(); renderMarket(); renderHotspots(); }, 120); });
 }
 
 function chips(id, values, current, onPick) {
@@ -70,6 +77,7 @@ function chips(id, values, current, onPick) {
 }
 function fillLocalities() {
   const locs = M.localities.filter(l => l.district === state.district).sort((a, b) => a.name.localeCompare(b.name));
+  if (!el("district").value) el("district").value = state.district;
   el("locality").innerHTML = `<option value="">Anywhere in ${esc(state.district)}</option>` +
     locs.map(l => `<option value="${esc(l.name)}">${esc(l.name)} (${l.n} listings)</option>`).join("");
   state.locality = "";
@@ -97,7 +105,7 @@ function renderKPIs() {
     ["Typical error", `±${M.cv.median_abs_pct_err}%`, "median, on held-out listings"],
   ];
   el("kpis").innerHTML = kv.map(([l, v, n]) => `<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div><div class="note">${n}</div></div>`).join("");
-  el("sources").innerHTML = "Data: public listings from " + Object.entries(M.sources).map(([s, n]) => `<a href="https://${esc(s)}">${esc(s)}</a> (${n.toLocaleString("en-IN")})`).join(" and ") + ". Collected October 2026 within each site's robots.txt rules; no personal data is stored.";
+  el("sources").innerHTML = "Data: public listings from " + Object.entries(M.sources).map(([s, n]) => `<a href="https://${esc(s)}">${esc(s)}</a> (${n.toLocaleString("en-IN")})`).join(", ") + `. Collected ${esc(M.collected || "October 2026")} within each site's robots.txt rules; no personal data is stored.`;
 }
 
 function update() {
@@ -135,10 +143,11 @@ function renderComps(x, est) {
     </a>`).join("") || `<p class="sub">No listings in this district yet.</p>`;
 }
 
-let mktType = "House";
+let mktType = "House", mktRegion = "All of Nepal", hotType = "Land";
+const inRegion = r => mktRegion === "All of Nepal" || (mktRegion === "Kathmandu Valley") === VALLEY.has(r.district);
 function renderMarket() {
   const groups = {};
-  L.filter(r => r.type === mktType && r.locality).forEach(r => { const k = r.locality + " | " + r.district; (groups[k] = groups[k] || []).push(r.price / r.area); });
+  L.filter(r => r.type === mktType && r.locality && inRegion(r)).forEach(r => { const k = r.locality + " | " + r.district; (groups[k] = groups[k] || []).push(r.price / r.area); });
   const rows = Object.entries(groups).filter(([, v]) => v.length >= 4)
     .map(([k, v]) => ({ loc: k.split(" | ")[0], dist: k.split(" | ")[1], med: median(v), n: v.length }))
     .sort((a, b) => b.med - a.med).slice(0, 20);
@@ -174,4 +183,52 @@ function renderAbout() {
     ["Training listings", M.n.toLocaleString("en-IN"), "after cleaning and outlier removal"],
   ];
   el("model-stats").innerHTML = tiles.map(([l, v, n]) => `<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div><div class="note">${n}</div></div>`).join("");
+}
+
+// Towns outside the Kathmandu Valley: median asking price per aana from recent listings,
+// with the change against the 2021–23 listings where both periods have enough data.
+function renderHotspots() {
+  const recentFrom = M.latest_year - 1, MIN = 5;
+  const groups = {};
+  L.filter(r => r.city && !VALLEY.has(r.district)).forEach(r => {
+    const g = groups[r.city] = groups[r.city] || { city: r.city, dist: r.district, land: [], house: [], landOld: [], houseOld: [], n: 0 };
+    g.n++;
+    const v = r.price / r.area, recent = r.year >= recentFrom, old = r.year <= 2023;
+    if (r.type === "Land") (recent ? g.land : old ? g.landOld : []).push(v);
+    else (recent ? g.house : old ? g.houseOld : []).push(v);
+  });
+  const key = hotType === "Land" ? "land" : "house";
+  // Fall back to all years when a town has too few recent listings.
+  const all = g => g[key].length >= MIN ? g[key] : g[key].concat(g[key + "Old"]);
+  const rows = Object.values(groups).map(g => {
+    const vals = all(g), recent = g[key].length >= MIN;
+    const chg = recent && g[key + "Old"].length >= 4 ? median(g[key]) / median(g[key + "Old"]) - 1 : null;
+    return { ...g, vals, med: vals.length ? median(vals) : 0, k: vals.length, recent, chg };
+  }).filter(r => r.k >= MIN).sort((a, b) => b.med - a.med).slice(0, 20);
+  el("hot-sub").textContent = `Median asking ${hotType === "Land" ? "land" : "house"} price per aana in towns with at least ${MIN} listings. Recent = ${recentFrom}–${M.latest_year}; towns marked * use all years.`;
+  const host = el("hot-chart");
+  if (!rows.length) { host.innerHTML = `<p class="sub">Not enough ${hotType.toLowerCase()} listings per town yet.</p>`; el("hot-table").innerHTML = ""; el("hot-insight").hidden = true; return; }
+  const W = Math.max(300, host.clientWidth), labelW = Math.min(170, W * 0.38), rowH = 26, barH = 14, H = rows.length * rowH + 24;
+  const max = Math.max(...rows.map(r => r.med)) * 1.15, x = v => labelW + (v / max) * (W - labelW - 60);
+  const narrow = W < 520;
+  const step = [1e5, 2e5, 5e5, 1e6, 2e6, 5e6, 1e7].find(st => max / st <= (narrow ? 3 : 6));
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Median price per aana by town outside the Kathmandu Valley">`;
+  for (let t = 0; t <= max; t += step) s += `<line class="gridline" x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H - 20}"/><text class="tick" x="${x(t)}" y="${H - 6}" text-anchor="middle">${t ? nprShort(t) : "0"}</text>`;
+  rows.forEach((r, i) => {
+    const y = i * rowH + 5;
+    s += `<text class="lbl" x="${labelW - 8}" y="${y + barH / 2 + 4}" text-anchor="end">${esc((narrow ? r.city : r.city + ", " + r.dist) + (r.recent ? "" : " *"))}</text>`;
+    s += `<path d="${hbar(labelW, y, x(r.med) - labelW, barH)}" fill="var(--accent)"${r.recent ? "" : ' opacity=".55"'}/>`;
+    s += `<text class="val" x="${x(r.med) + 6}" y="${y + barH / 2 + 4}">${nprShort(r.med)}</text>`;
+    s += `<rect class="hit" data-tip="${i}" x="0" y="${y - 6}" width="${W}" height="${rowH}"/>`;
+  });
+  s += `<line class="baseline" x1="${labelW}" x2="${labelW}" y1="0" y2="${H - 20}"/></svg>`;
+  host.innerHTML = s;
+  const pct = c => c == null ? "–" : (c >= 0 ? "+" : "−") + Math.abs(Math.round(c * 100)) + "%";
+  bindTips(host.querySelector("svg"), i => ({ title: `${rows[i].city}, ${rows[i].dist}`, rows: [["Median per aana", npr(rows[i].med)], ["Listings used", rows[i].k + (rows[i].recent ? ` (${recentFrom}–${M.latest_year})` : " (all years)")], ["vs 2021–23", pct(rows[i].chg)]] }));
+  const top = rows.filter(r => r.recent).slice(0, 3).map(r => r.city);
+  const up = rows.filter(r => r.chg != null).sort((a, b) => b.chg - a.chg)[0];
+  el("hot-insight").hidden = !top.length;
+  el("hot-insight").textContent = top.length ? `Priciest ${hotType.toLowerCase()} outside the Valley right now: ${top.join(", ")}.` + (up ? ` Biggest rise since 2021–23: ${up.city} (${pct(up.chg)}).` : "") : "";
+  el("hot-table").innerHTML = `<table><thead><tr><th>Town</th><th>District</th><th class="n">Median per aana</th><th class="n">Listings</th><th class="n">vs 2021–23</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td>${esc(r.city)}${r.recent ? "" : " *"}</td><td>${esc(r.dist)}</td><td class="n">${npr(r.med)}</td><td class="n">${r.k}</td><td class="n">${pct(r.chg)}</td></tr>`).join("") + "</tbody></table>";
 }

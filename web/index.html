@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nepal Property Price Estimator</title>
-<meta name="description" content="Estimate the asking price of a house or land in Nepal from real listings: Kathmandu, Lalitpur, Bhaktapur and beyond.">
+<meta name="description" content="Estimate the asking price of a house or land in Nepal from real listings: Kathmandu Valley, Pokhara, Chitwan, Butwal, Itahari, Birtamod and beyond.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,7 +23,7 @@
       <h2 id="in-title">Property details</h2>
       <p class="sub">The estimate updates as you type.</p>
       <div class="field"><span>Property type</span><div class="seg" id="type" role="radiogroup" aria-label="Property type"></div></div>
-      <div class="field"><span>District</span><div class="seg" id="district" role="radiogroup" aria-label="District"></div></div>
+      <label class="field"><span>District</span><select id="district"></select></label>
       <label class="field"><span>Area / locality</span><select id="locality"></select></label>
       <div class="field">
         <span>Land area</span>
@@ -63,9 +63,23 @@
       </div>
       <button class="ghost" data-table-toggle="mkt">Show table</button>
     </div>
-    <div class="controls"><div class="chips" id="mkt-type" role="radiogroup" aria-label="Property type"></div></div>
+    <div class="controls"><div class="chips" id="mkt-type" role="radiogroup" aria-label="Property type"></div><div class="chips" id="mkt-region" role="radiogroup" aria-label="Region"></div></div>
     <div class="chart" id="mkt-chart"></div>
     <div class="table-view" id="mkt-table" hidden></div>
+  </section>
+
+  <section class="card" aria-labelledby="hot-title">
+    <div class="card-head">
+      <div>
+        <h2 id="hot-title">Hotspot towns outside the Valley</h2>
+        <p class="sub" id="hot-sub"></p>
+      </div>
+      <button class="ghost" data-table-toggle="hot">Show table</button>
+    </div>
+    <div class="controls"><div class="chips" id="hot-type" role="radiogroup" aria-label="Property type"></div></div>
+    <div class="chart" id="hot-chart"></div>
+    <p class="insight" id="hot-insight" hidden></p>
+    <div class="table-view" id="hot-table" hidden></div>
   </section>
 
   <section class="card" aria-labelledby="about-title">

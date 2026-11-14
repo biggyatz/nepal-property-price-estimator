@@ -10,6 +10,9 @@ import numpy as np, pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import KFold, cross_val_predict
+from places import TERAI
+
+COLLECTED = "October–November 2026"
 
 df = pd.read_csv("property.csv")
 df = df[(df.price_npr > 5e5) & (df.area_aana >= 0.5) & (df.area_aana <= 400)].copy()
@@ -63,6 +66,7 @@ model = {
     "sources": df.source.value_counts().to_dict(),
     "years": {int(k): int(v) for k, v in df.year.value_counts().sort_index().items()},
     "districts": sorted(df.district.unique()),
+    "terai": sorted(TERAI), "collected": COLLECTED,
     "localities": [{"name": l.split(" | ")[0], "district": l.split(" | ")[1], "n": int((df["loc"] == l).sum())}
                    for l in sorted(set(df["loc"]) - {""})],
 }
