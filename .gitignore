@@ -4,3 +4,8 @@ venv/
 .venv/
 .ipynb_checkpoints/
 .DS_Store
+raw_*.jsonl
+urls_*.txt
+property.csv
+property_model.json
+property_model_rows.csv

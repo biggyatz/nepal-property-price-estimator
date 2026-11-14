@@ -115,7 +115,7 @@ def place(rows):
             x["locality"], x["city"], x["district"] = split_address(x["address"], x["title"])
     known = {}
     for x in rows:
-        if x["locality"] and x["district"]:
+        if x.get("locality") and x.get("district"):
             known.setdefault(x["locality"].lower(), Counter())[x["district"]] += 1
     known = {k: c.most_common(1)[0][0] for k, c in known.items() if c.most_common(1)[0][1] >= 2}
     vocab = {k: (k.title(), d) for k, d in known.items()}
