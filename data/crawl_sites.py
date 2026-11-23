@@ -26,7 +26,7 @@ def fetch(url, timeout=60, tries=3):
     """GET a page. If the site shows its rate-limit challenge instead, back off and retry;
     the challenge is never solved or bypassed."""
     for k in range(tries):
-        req = urllib.request.Request(urllib.parse.quote(url, safe=":/?&=%#+,;@!$'()*~"), headers={"User-Agent": UA})
+        req = urllib.request.Request(urllib.parse.quote(url, safe=":/?&=%#+,;@!$'()*~"), headers={"User-Agent": UA, "Accept": "*/*"})
         with urllib.request.urlopen(req, timeout=timeout) as r:
             final, page = r.geturl(), r.read().decode("utf-8", "ignore")
         if not ("window.location.reload" in page[:3000] and len(page) < 30000):
