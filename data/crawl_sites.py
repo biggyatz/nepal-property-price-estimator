@@ -1,6 +1,6 @@
 """Incremental, polite crawler for Nepali property portals that publish sitemaps.
 
-    python crawl_sites.py basobaas npb gharjagganepal gharghaderi [--budget-min 40] [--max 0]
+    python crawl_sites.py basobaas npb gharjagganepal gharghaderi nepalhomes jaggaghar [--budget-min 40] [--max 0]
 
 For each site the property sitemap is read, and only pages that are new, or whose
 sitemap <lastmod> changed since the last visit, are fetched. Each visit appends one
@@ -41,8 +41,14 @@ def lines_of(page):
 def sitemap_urls(index_url, keep):
     """{url: lastmod} for every URL matching `keep` in a sitemap or sitemap index."""
     out = {}
-    _, s = fetch(index_url)
-    time.sleep(2)
+    for k in range(3):
+        _, s = fetch(index_url)
+        time.sleep(2)
+        if "<urlset" in s or "<sitemapindex" in s:
+            break
+        time.sleep(60 * (k + 1))          # not a sitemap: the site's "please wait" page; back off
+    else:
+        raise Challenged(index_url)
     if "<sitemapindex" in s:
         for sub in re.findall(r"<loc>\s*(?:<!\[CDATA\[)?([^<\]\s]+)", s):
             if re.search(r"propert|land|house|post-sitemap|sitemap\d*\.xml", sub) and "page-sitemap" not in sub:
@@ -216,6 +222,97 @@ SITES = {
 # Slowest pace each site has asked for (Nepal Property Bazaar rate-limits faster clients).
 MIN_DELAY = {"npb": 4.0}
 
+# ------------------------------------------------------------- nepalhomes.com (Next.js)
+NH_SEARCH = "https://www.nepalhomes.com/search?find_property_purpose=5db2bdb42485621618ecdae6&page={}"   # purpose = Sale
+
+def _nh_name(v):
+    return (v.get("name") or v.get("title")) if isinstance(v, dict) else v
+
+def nepalhomes_record(x):
+    """Only property attributes from one search result; the poster's name, phone, e-mail
+    and agency contact fields that the site embeds are dropped here."""
+    b, a, lp, bd, pr = (x.get(k) or {} for k in ("basic", "address", "location_property", "building", "price"))
+    return {"url": "https://www.nepalhomes.com/detail/" + x["slug_url"], "title": clean((b.get("title") or "").strip()),
+            "category": _nh_name(b.get("property_category")), "purpose": _nh_name(b.get("property_purpose")),
+            "district": _nh_name(a.get("district_id")), "municipality": _nh_name(a.get("city_id")), "area": _nh_name(a.get("area_id")),
+            "total_area": lp.get("total_area"), "road_ft": lp.get("road_access_value"), "road_unit": _nh_name(lp.get("road_access_length_unit")),
+            "floors": bd.get("total_floor"), "built_year": bd.get("built_year"),
+            "price": None if pr.get("is_price_on_call") else pr.get("value"), "price_label": _nh_name(pr.get("label")),
+            "sold_out": x.get("is_sold_out"), "is_project": x.get("is_project"), "published": (x.get("added_at") or "")[:10],
+            "lastmod": (x.get("added_at") or "")[:10]}
+
+def _nh_items(s):
+    d = json.loads(re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', s, re.S).group(1))
+    return d["props"]["pageProps"]["properties"]["data"]["data"]
+
+# ---------------------------------------------- jaggaghar.com (public JSON API behind the site)
+JG_API = "https://api.namaestate.com/properties/?city=13&limit=50&offset={}&order=-created_at"
+
+def jaggaghar_record(x):
+    """Property attributes only: the agency's name, phone and e-mail, the description and media are dropped."""
+    cat = (x.get("category") or {}).get("name")
+    return {"url": "https://www.jaggaghar.com/property/" + x["slug"], "title": clean(x.get("name")), "category": cat,
+            "listing_type": x.get("listing_type"), "location": clean(x.get("location")), "price": x.get("price"),
+            "pricing_structure": x.get("pricing_structure"), "land_area": x.get("land_area"), "area_unit": x.get("area_unit"),
+            "road_length": x.get("road_length"), "road_unit": x.get("road_measuring_unit"), "floors": x.get("counter_floor"),
+            "bedrooms": x.get("counter_bedroom"), "lat": x.get("latitude"), "lon": x.get("longitude"),
+            "status": x.get("status"), "published": (x.get("created_at") or "")[:10], "lastmod": (x.get("updated_at") or x.get("created_at") or "")[:10]}
+
+def crawl_paged(name, page_url, items_of, record, budget_s, max_pages, delay, step):
+    """Paged crawl of a newest-first listing. Phase 1 reads from the top until 3 pages bring
+    nothing new (catches new listings). Phase 2 continues the backlog from where the last
+    run stopped (raw/<name>.cursor.json), so a time-limited run still covers everything over time."""
+    path = os.path.join(RAW, f"{name}.jsonl")
+    cur_path = os.path.join(RAW, f"{name}.cursor.json")
+    state = load_state(path)
+    cursor = json.load(open(cur_path)) if os.path.exists(cur_path) else {"backfill_page": len(state) // step, "done": False}
+    t0, n, out = time.time(), 0, open(path, "a")
+
+    def read(page):
+        nonlocal n
+        _, s = fetch(page_url(page))
+        items = items_of(s)
+        new = 0
+        for x in items:
+            try:
+                rec = record(x)
+            except (KeyError, TypeError):
+                continue
+            if rec["url"] in state and state[rec["url"]].get("lastmod") == rec["lastmod"]:
+                continue
+            rec["fetched"] = str(date.today())
+            out.write(json.dumps(scrub(rec), ensure_ascii=False) + "\n"); state[rec["url"]] = rec; new += 1; n += 1
+        out.flush()
+        time.sleep(delay)
+        return len(items), new
+
+    pages = 0
+    try:
+        page, known = 0, 0
+        while known < 3 and time.time() - t0 < budget_s and (not max_pages or pages < max_pages):
+            got, new = read(page); pages += 1
+            if not got:
+                break
+            known = known + 1 if new == 0 else 0
+            page += 1
+        page = max(cursor["backfill_page"], page)
+        while not cursor["done"] and time.time() - t0 < budget_s and (not max_pages or pages < max_pages):
+            got, _ = read(page); pages += 1
+            if not got:
+                cursor["done"] = True; break
+            page += 1
+            cursor["backfill_page"] = page
+            if pages % 50 == 0:
+                print(f"{name}: backlog page {page}, {n} new", file=sys.stderr, flush=True)
+    except Challenged:
+        print(f"{name}: rate-limited; stopping this run", file=sys.stderr)
+    except Exception as e:
+        print(f"ERR {name}", e, file=sys.stderr)
+    out.close()
+    json.dump(cursor, open(cur_path, "w"))
+    print(f"{name}: {n} new or changed listings from {pages} pages; backlog {'complete' if cursor['done'] else 'continues at page ' + str(cursor['backfill_page'])}", file=sys.stderr)
+    return n
+
 def load_state(path):
     state = {}
     if os.path.exists(path):
@@ -274,12 +371,17 @@ def compact(name):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("sites", nargs="+", choices=list(SITES))
+    ap.add_argument("sites", nargs="+", choices=list(SITES) + ["nepalhomes", "jaggaghar"])
     ap.add_argument("--budget-min", type=float, default=40, help="stop each site after this many minutes")
     ap.add_argument("--max", type=int, default=0, help="fetch at most this many pages per site (0 = all)")
     ap.add_argument("--delay", type=float, default=1.0, help="seconds between requests to a site")
     a = ap.parse_args()
     os.makedirs(RAW, exist_ok=True)
     for s in a.sites:
-        crawl(s, a.budget_min * 60, a.max, a.delay)
+        if s == "nepalhomes":
+            crawl_paged(s, lambda p: NH_SEARCH.format(p + 1), _nh_items, nepalhomes_record, a.budget_min * 60, a.max, max(a.delay, 2.0), 8)
+        elif s == "jaggaghar":
+            crawl_paged(s, lambda p: JG_API.format(p * 50), lambda t: json.loads(t)["results"], jaggaghar_record, a.budget_min * 60, a.max, max(a.delay, 2.0), 50)
+        else:
+            crawl(s, a.budget_min * 60, a.max, a.delay)
         compact(s)

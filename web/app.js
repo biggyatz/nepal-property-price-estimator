@@ -240,6 +240,7 @@ const mapState = { type: "Land", layer: "Price per aana", period: "Last 2 years"
 const SITE_INFO = {
   "nepalpropertybazaar.com": ["Nepal Property Bazaar", "NPB"], "basobaas.com": ["Basobaas", "BB"],
   "gharjagganepal.com": ["Ghar Jagga Nepal", "GJN"], "gharghaderi.com": ["Gharghaderi", "GG"],
+  "nepalhomes.com": ["Nepal Homes", "NH"], "jaggaghar.com": ["Jagga Ghar", "JG"],
   "hamrobazaar.com": ["Hamrobazaar", "HB"], "99aana.com": ["99aana", "99A"],
 };
 const siteName = s => (SITE_INFO[s] || [s])[0];

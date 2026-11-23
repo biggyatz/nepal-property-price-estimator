@@ -6,6 +6,8 @@ Inputs (any that exist):
   raw/hamrobazaar_details.jsonl  Hamrobazar detail pages (crawl_hamrobazar_details.js)
   raw/basobaas.jsonl, raw/npb.jsonl, raw/gharghaderi.jsonl, raw/gharjagganepal.jsonl
                                  Basobaas, Nepal Property Bazaar, Gharghaderi, Ghar Jagga Nepal pages (crawl_sites.py)
+  raw/nepalhomes.jsonl, raw/jaggaghar.jsonl
+                                 Nepal Homes search pages and Jagga Ghar's listing API (crawl_sites.py)
   property_listings.csv          previous cleaned table; rows whose raw page is gone (sold,
                                  withdrawn, expired) are kept as historical asking prices
 """
@@ -152,6 +154,52 @@ def from_gharjagganepal(r):
                 road_ft=r.get("road_ft"), rooms=first_float(r.get("bedrooms")), bathrooms=first_float(r.get("bathrooms")),
                 listed=_date(r.get("published")) or r.get("lastmod") or "", lat=r.get("lat"), lon=r.get("lon"))
 
+def _bkd(text):
+    """'1-2-5' in the Terai is bigha-kattha-dhur."""
+    m = re.fullmatch(r"\s*(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)\s*", text or "")
+    return f"{m.group(1)} bigha {m.group(2)} kattha {m.group(3)} dhur" if m else text
+
+def from_nepalhomes(r):
+    """nepalhomes.com search results: district / municipality / area fields, area as ropani-aana-paisa-dam."""
+    if r.get("purpose") != "Sale" or r.get("category") not in ("House", "Land") or r.get("is_project") or not r.get("price"):
+        return None
+    label = (r.get("price_label") or "").lower()
+    if "month" in label:
+        return None
+    price = f"Rs {r['price']}" + (" " + label if label.startswith("per") else "")
+    road = first_float(str(r.get("road_ft") or ""))
+    if road and (r.get("road_unit") or "").lower().startswith("met"):
+        road = round(road * 3.281, 1)
+    muni = re.sub(r"\b(Sub-?)?Metropolitan( City)?\b|\bMunicipality\b|\bRural\b", "", r.get("municipality") or "", flags=re.I).strip()
+    address = ", ".join(x for x in (r.get("area"), muni, r.get("district")) if x)
+    return dict(source="nepalhomes.com", url=r["url"], title=r.get("title") or "", type=r["category"], address=address,
+                price_text=price, area_text=_bkd(r.get("total_area")), floors=r.get("floors") if r["category"] == "House" else None,
+                road_ft=road, rooms=None, bathrooms=None, listed=r.get("published") or "")
+
+def from_jaggaghar(r):
+    """jaggaghar.com (namaestate API): location text, land area with unit, total or per-unit price."""
+    if r.get("listing_type") != "sell" or r.get("category") not in ("House", "Land") or r.get("status") != "published":
+        return None
+    price = first_float(str(r.get("price") or ""))
+    if not price:
+        return None
+    ps = (r.get("pricing_structure") or "total").lower()
+    unit = r.get("area_unit") or "aana"
+    price_text = f"Rs {price:.0f}" + ("" if ps == "total" else f" per {unit}")
+    area = r.get("land_area") or ""
+    if area and not area_sqft(area):
+        area = f"{area} {unit}" if re.fullmatch(r"[\d.]+", area.strip()) and unit in ("aana", "ropani", "dhur", "kattha", "bigha") else None
+    if not area:
+        m = AREA_IN_TEXT.search(r.get("title") or "")
+        area = m.group(1) if m else None
+    road = first_float(str(r.get("road_length") or ""))
+    if road and (r.get("road_unit") or "").lower().startswith("met"):
+        road = round(road * 3.281, 1)
+    floors = first_float(str(r.get("floors") or "")) if r["category"] == "House" else None
+    return dict(source="jaggaghar.com", url=r["url"], title=r.get("title") or "", type=r["category"], address=r.get("location"),
+                price_text=price_text, area_text=area, floors=floors, road_ft=road, rooms=None, bathrooms=None,
+                listed=r.get("published") or "", lat=first_float(str(r.get("lat") or "")) or None, lon=first_float(str(r.get("lon") or "")) or None)
+
 def merge_spellings(rows, cutoff=0.9):
     """Map near-identical locality spellings within a district onto the most common one
     (e.g. 'Bhiasepati' -> 'Bhaisepati', 'Budanilkantha' -> 'Budhanilkantha')."""
@@ -263,7 +311,8 @@ if __name__ == "__main__":
         if r.get("title"):
             rows.append(from_hamrobazar(r))
     for path, fn in (("raw/basobaas.jsonl", from_basobaas), ("raw/npb.jsonl", from_npb), ("raw/gharghaderi.jsonl", from_gharghaderi),
-                     ("raw/gharjagganepal.jsonl", from_gharjagganepal)):
+                     ("raw/gharjagganepal.jsonl", from_gharjagganepal), ("raw/nepalhomes.jsonl", from_nepalhomes),
+                     ("raw/jaggaghar.jsonl", from_jaggaghar)):
         for r in load_jsonl(path):
             x = fn(r)
             if x:
