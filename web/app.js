@@ -246,9 +246,9 @@ function initMap() {
   if (typeof L === "undefined" || !L_.map) { el("map").innerHTML = `<p class="sub" style="padding:16px">The map could not load.</p>`; return; }
   MAP = L.map("map", { scrollWheelZoom: false, zoomSnap: 0.5 }).setView([28.2, 84.1], 7);
   MAP.fitBounds([[26.35, 80.06], [30.45, 88.2]]);
-  L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark() ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`, {
-    maxZoom: 17, subdomains: "abcd",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 17, className: "base-tiles",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(MAP);
   chips("map-type", ["Land", "House"], mapState.type, v => { mapState.type = v; renderMap(); });
   chips("map-layer", ["Price per aana", "Listing heatmap"], mapState.layer, v => { mapState.layer = v; renderMap(); });
@@ -268,7 +268,7 @@ function renderMap() {
   if (mapState.layer === "Listing heatmap") {
     // District-centre points would create false hot spots, so only pins, localities and towns.
     const pts = rows.filter(r => r.geo !== "district").map(r => [r.lat, r.lon, 1]);
-    mapLayer = L.heatLayer(pts, { radius: 18, blur: 22, maxZoom: 12, minOpacity: 0.25,
+    mapLayer = L.heatLayer(pts, { radius: 16, blur: 20, maxZoom: 9, max: 0.6, minOpacity: 0.3,
       gradient: dark() ? { 0.3: "#184f95", 0.6: "#3987e5", 1: "#cde2fb" } : { 0.3: "#9ec5f4", 0.6: "#3987e5", 1: "#0d366b" } }).addTo(MAP);
     legend.innerHTML = `<span class="key">Fewer listings</span><span class="ramp">${(dark() ? RAMP_DARK : RAMP_LIGHT).map(c => `<span style="background:${c}"></span>`).join("")}</span><span class="key">More listings</span>`;
     el("map-note").textContent = `${pts.length.toLocaleString("en-IN")} ${mapState.type.toLowerCase()} listings placed by map pin, locality or town.`;

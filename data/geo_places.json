@@ -1,0 +1,899 @@
+{
+"Anamnagar|Kathmandu": [
+27.69285,
+85.32844
+],
+"Badikhel|Lalitpur": [
+27.5911,
+85.35041
+],
+"Bafal|Kathmandu": [
+27.70023,
+85.28176
+],
+"Bagdol|Lalitpur": [
+27.66966,
+85.30352
+],
+"Bagmati|Lalitpur": [
+27.48451,
+85.29298
+],
+"Balaju|Kathmandu": [
+27.73095,
+85.29808
+],
+"Balkot|Bhaktapur": [
+27.66109,
+85.36975
+],
+"Balkumari|Lalitpur": [
+27.63274,
+85.31841
+],
+"Baluwakhani|Kathmandu": [
+27.74329,
+85.35542
+],
+"Baluwatar|Kathmandu": [
+27.7246,
+85.33102
+],
+"Banasthali|Kathmandu": [
+27.72494,
+85.29776
+],
+"Banepa|Kavrepalanchok": [
+27.64736,
+85.51751
+],
+"Baneshwor|Kathmandu": [
+27.68991,
+85.33566
+],
+"Baniyatar|Kathmandu": [
+27.74838,
+85.31845
+],
+"Bansbari|Kathmandu": [
+27.74607,
+85.34277
+],
+"Bardibas|Mahottari": [
+26.99044,
+85.89331
+],
+"Basundhara|Kathmandu": [
+27.74224,
+85.33262
+],
+"Battisputali|Kathmandu": [
+27.70568,
+85.34151
+],
+"Belbari|Morang": [
+26.63063,
+87.44278
+],
+"Bhadrabas|Kathmandu": [
+27.73988,
+85.42101
+],
+"Bhadrapur|Jhapa": [
+26.54556,
+88.09038
+],
+"Bhairahawa-Parasi|Rupandehi": [
+27.50568,
+83.46251
+],
+"Bhairahawa|Rupandehi": [
+27.51062,
+83.45329
+],
+"Bhaisepati|Lalitpur": [
+27.65617,
+85.30604
+],
+"Bhandari Gaun|Lalitpur": null,
+"Bhangal|Kathmandu": [
+27.74807,
+85.35674
+],
+"Bharatpur|Chitwan": [
+27.68119,
+84.43017
+],
+"Bhimsengola|Kathmandu": [
+27.69849,
+85.34358
+],
+"Biratnagar|Morang": [
+26.4623,
+87.28162
+],
+"Birgunj|Parsa": [
+27.01352,
+84.87638
+],
+"Birtamode|Jhapa": [
+26.64304,
+87.99186
+],
+"Birtamod|Jhapa": [
+26.64339,
+87.99147
+],
+"Bishalnagar|Kathmandu": [
+27.72178,
+85.33556
+],
+"Bode|Bhaktapur": [
+27.68789,
+85.38499
+],
+"Bojhepokhari|Lalitpur": null,
+"Boudha|Kathmandu": [
+27.7205,
+85.36042
+],
+"Bramhakhel|Kathmandu": null,
+"Budhanilkantha|Kathmandu": [
+27.77813,
+85.36234
+],
+"Butwal|Rupandehi": [
+27.7004,
+83.46577
+],
+"Chandol|Kathmandu": [
+27.73123,
+85.34072
+],
+"Chandragadhi|Jhapa": [
+26.56751,
+88.06888
+],
+"Chandragiri|Kathmandu": [
+27.68893,
+85.24229
+],
+"Changathali|Lalitpur": [
+27.65435,
+85.36826
+],
+"Changunarayan|Bhaktapur": [
+27.71646,
+85.42799
+],
+"Chapali|Kathmandu": [
+27.77697,
+85.33903
+],
+"Chardobato|Bhaktapur": [
+27.68222,
+85.41043
+],
+"Chasidol|Lalitpur": [
+27.64646,
+85.38471
+],
+"Chhauni|Kathmandu": [
+27.70913,
+85.29033
+],
+"Chunikhel|Kathmandu": [
+27.76244,
+85.36598
+],
+"Dadhikot|Bhaktapur": [
+27.64923,
+85.39359
+],
+"Dahachok|Kathmandu": [
+27.71784,
+85.22337
+],
+"Dallu|Kathmandu": [
+27.7109,
+85.296
+],
+"Damak|Jhapa": [
+26.66501,
+87.70115
+],
+"Danchhi|Kathmandu": [
+27.73624,
+85.41553
+],
+"Darjeeling|Bhaktapur": null,
+"Devchuli|Nawalparasi": [
+27.71365,
+84.19966
+],
+"Devdaha|Rupandehi": [
+27.63262,
+83.57099
+],
+"Dhaneshwor|Kathmandu": [
+27.68446,
+85.32935
+],
+"Dhapakhel|Lalitpur": [
+27.63679,
+85.3302
+],
+"Dhapasi|Kathmandu": [
+27.74519,
+85.32912
+],
+"Dharan|Sunsari": [
+26.8129,
+87.284
+],
+"Dholahiti|Lalitpur": [
+27.64114,
+85.31848
+],
+"Dhulikhel|Kavrepalanchok": [
+27.61892,
+85.55292
+],
+"Dhumbarahi|Kathmandu": [
+27.72503,
+85.34074
+],
+"Dhumchepakha|Bhaktapur": null,
+"Dhunchepakha|Bhaktapur": null,
+"Dhungedhara|Kathmandu": [
+27.72429,
+85.2895
+],
+"Dhunibesi|Dhading": [
+27.72353,
+85.16981
+],
+"Dibyeshwori|Bhaktapur": [
+27.67692,
+85.36154
+],
+"Ekatabasti|Kathmandu": null,
+"Gaindakot|Nawalparasi": [
+27.73292,
+84.33984
+],
+"Gathaghar|Bhaktapur": [
+27.67497,
+85.37435
+],
+"Godam Chaur Bisnkhunarayan|Lalitpur": null,
+"Godamchaur|Lalitpur": [
+27.61288,
+85.36502
+],
+"Godawari|Lalitpur": [
+27.58124,
+85.33932
+],
+"Gokarna|Kathmandu": [
+27.72629,
+85.37591
+],
+"Gokarneshwor|Kathmandu": [
+27.72629,
+85.37591
+],
+"Goldhunga|Kathmandu": [
+27.7511,
+85.2946
+],
+"Gongabu|Kathmandu": [
+27.7429,
+85.32018
+],
+"Gothatar|Kathmandu": [
+27.69279,
+85.3713
+],
+"Gundu|Bhaktapur": [
+27.64363,
+85.41175
+],
+"Gurjudhara|Kathmandu": [
+27.68749,
+85.23535
+],
+"Gwarko|Lalitpur": [
+27.66368,
+85.3293
+],
+"Harisiddhi|Lalitpur": [
+27.63627,
+85.34027
+],
+"Hattiban|Lalitpur": [
+27.64994,
+85.33254
+],
+"Hattigauda|Kathmandu": [
+27.75693,
+85.34947
+],
+"Helmet Dada|Bhaktapur": null,
+"Hepali|Kathmandu": [
+27.75356,
+85.3402
+],
+"Hetauda|Makwanpur": [
+27.42959,
+85.03266
+],
+"Ichangunarayan|Kathmandu": [
+27.72231,
+85.27486
+],
+"Imadol|Lalitpur": [
+27.66682,
+85.3443
+],
+"Itahara|Morang": null,
+"Itahari|Sunsari": [
+26.66225,
+87.2749
+],
+"Janakpur|Dhanusha": [
+26.72845,
+85.9249
+],
+"Jarankhu|Kathmandu": [
+27.75503,
+85.30205
+],
+"Jharuwarasi|Lalitpur": [
+27.61205,
+85.33938
+],
+"Jhaukhel|Bhaktapur": [
+27.69358,
+85.43395
+],
+"Jorpati|Kathmandu": [
+27.72199,
+85.37305
+],
+"Kadaghari|Kathmandu": [
+27.69322,
+85.36737
+],
+"Kageshwori Manohara|Kathmandu": [
+27.72791,
+85.40843
+],
+"Kakrabari|Bhaktapur": null,
+"Kalanki|Kathmandu": [
+27.69561,
+85.27961
+],
+"Kalika|Chitwan": [
+27.7147,
+84.59542
+],
+"Kalimati|Kathmandu": [
+27.70091,
+85.29266
+],
+"Kamalbinayak|Bhaktapur": [
+27.67957,
+85.44272
+],
+"Kamerotar|Bhaktapur": [
+27.67857,
+85.39226
+],
+"Kanepokhari|Morang": [
+26.60056,
+87.49734
+],
+"Kapan|Kathmandu": [
+27.73421,
+85.35732
+],
+"Katunje|Bhaktapur": [
+27.66528,
+85.4026
+],
+"Kausaltar|Bhaktapur": [
+27.67458,
+85.3643
+],
+"Kavresthali|Kathmandu": [
+27.78476,
+85.30095
+],
+"Kawasoti|Nawalparasi": [
+27.64153,
+84.12516
+],
+"Khairahani|Chitwan": [
+27.57144,
+84.53828
+],
+"Kharipati|Bhaktapur": [
+27.70274,
+85.47072
+],
+"Khumaltar|Lalitpur": [
+27.65367,
+85.32851
+],
+"Kirtipur|Kathmandu": [
+27.67666,
+85.27824
+],
+"Koteshwor|Kathmandu": [
+27.67555,
+85.33832
+],
+"Krishna Mandir|Lalitpur": [
+27.67362,
+85.32496
+],
+"Kritipur|Kathmandu": [
+27.67577,
+85.27293
+],
+"Kusunti|Lalitpur": [
+27.66311,
+85.31528
+],
+"Lainchaur|Kathmandu": [
+27.71941,
+85.31516
+],
+"Lamatar|Lalitpur": [
+27.63296,
+85.39002
+],
+"Lazimpat|Kathmandu": [
+27.72151,
+85.32076
+],
+"Lele|Lalitpur": [
+27.57204,
+85.33034
+],
+"Lokanthali|Bhaktapur": [
+27.6742,
+85.35922
+],
+"Lolang|Kathmandu": [
+27.74933,
+85.29648
+],
+"Lubhu|Lalitpur": [
+27.64348,
+85.3715
+],
+"Machapokhari|Kathmandu": [
+27.73575,
+85.30462
+],
+"Machhegaun|Kathmandu": [
+27.66998,
+85.25223
+],
+"Madhyapur Thimi|Bhaktapur": [
+27.67865,
+85.3983
+],
+"Mahalaxmi|Lalitpur": [
+27.64348,
+85.3715
+],
+"Mahankal|Kathmandu": [
+27.73612,
+85.34739
+],
+"Maharajgunj|Kathmandu": [
+27.72821,
+85.32455
+],
+"Makalbari|Kathmandu": [
+27.73077,
+85.38494
+],
+"Manamaiju|Kathmandu": [
+27.71624,
+85.31275
+],
+"Mandikhatar|Kathmandu": [
+27.73631,
+85.34778
+],
+"Matatirtha|Kathmandu": [
+27.67494,
+85.23699
+],
+"Mulpani|Kathmandu": [
+27.70964,
+85.39508
+],
+"Nagarjun|Kathmandu": [
+27.71748,
+85.26931
+],
+"Naikap|Kathmandu": [
+27.69142,
+85.2667
+],
+"Nakhipot|Lalitpur": [
+27.65039,
+85.32076
+],
+"Nakkhu|Lalitpur": [
+27.62341,
+85.3066
+],
+"Nangkhel|Bhaktapur": null,
+"Narayantar|Kathmandu": [
+27.72144,
+85.38003
+],
+"Narayanthan|Kathmandu": [
+27.76827,
+85.37337
+],
+"Naubise|Dhading": [
+27.7171,
+85.15175
+],
+"Nayapati|Kathmandu": [
+27.74486,
+85.40961
+],
+"Nepaltar|Kathmandu": [
+27.74275,
+85.30183
+],
+"New Baneshwor|Kathmandu": [
+27.68991,
+85.33566
+],
+"New|Kathmandu": [
+27.69373,
+85.33666
+],
+"Nilbarahi|Bhaktapur": [
+27.69519,
+85.39601
+],
+"Ochu|Lalitpur": null,
+"Palungtar|Gorkha": [
+28.01212,
+84.51884
+],
+"Panauti|Kavrepalanchok": [
+27.58073,
+85.52286
+],
+"Panipokhari|Kathmandu": [
+27.72925,
+85.32475
+],
+"Pasikot|Kathmandu": [
+27.77327,
+85.35243
+],
+"Pawan Prakriti School|Lalitpur": null,
+"Pepsicola|Kathmandu": [
+27.68879,
+85.36674
+],
+"Pharping|Kathmandu": [
+27.61164,
+85.26701
+],
+"Pokhara|Kaski": [
+28.20954,
+83.9914
+],
+"Ramgram|Nawalparasi": [
+27.52708,
+83.64807
+],
+"Ramkot|Kathmandu": [
+27.72086,
+85.25218
+],
+"Raniban|Kathmandu": [
+27.74991,
+85.26163
+],
+"Ranibari|Kathmandu": [
+27.73079,
+85.32095
+],
+"Rapti|Chitwan": [
+27.6495,
+84.66141
+],
+"Ratnanagar|Chitwan": [
+27.61555,
+84.51145
+],
+"Ratuwamai|Morang": [
+26.49207,
+87.63773
+],
+"Sainamaina|Rupandehi": [
+27.7284,
+83.24262
+],
+"Sallaghari|Bhaktapur": [
+27.67327,
+85.40735
+],
+"Samakhusi|Kathmandu": [
+27.73542,
+85.32214
+],
+"Sanagau|Lalitpur": [
+27.65088,
+85.35523
+],
+"Sanepa|Lalitpur": [
+27.68454,
+85.30659
+],
+"Sankhu|Kathmandu": [
+27.72652,
+85.45572
+],
+"Sano Bharyang|Kathmandu": [
+27.72092,
+85.28922
+],
+"Sanothimi|Bhaktapur": [
+27.6885,
+85.37842
+],
+"Satdobato|Lalitpur": [
+27.65895,
+85.32324
+],
+"Satungal|Kathmandu": [
+27.68069,
+85.24487
+],
+"Setipakha|Lalitpur": null,
+"Shankharapur|Kathmandu": [
+27.73066,
+85.4662
+],
+"Shital|Lalitpur": [
+27.64977,
+85.32247
+],
+"Siddhipur|Lalitpur": [
+27.64737,
+85.35682
+],
+"Sinamangal|Kathmandu": [
+27.69918,
+85.35042
+],
+"Sipadol|Bhaktapur": [
+27.65715,
+85.4312
+],
+"Sirutar|Bhaktapur": [
+27.65576,
+85.37493
+],
+"Sitapaila|Kathmandu": [
+27.71171,
+85.2769
+],
+"Sitapakha|Lalitpur": [
+27.65069,
+85.34314
+],
+"Soltidobato|Kathmandu": [
+27.70451,
+85.28197
+],
+"Sudal|Bhaktapur": [
+27.67697,
+85.48032
+],
+"Sukedhara|Kathmandu": [
+27.72576,
+85.34432
+],
+"Sunakothi|Lalitpur": [
+27.63302,
+85.31802
+],
+"Sundarijal|Kathmandu": [
+27.75801,
+85.41919
+],
+"Suryabinayak|Bhaktapur": [
+27.66755,
+85.40341
+],
+"Swayambhu|Kathmandu": [
+27.71581,
+85.29096
+],
+"Swoyambhu|Kathmandu": [
+27.71375,
+85.30288
+],
+"Syuchatar|Kathmandu": [
+27.69903,
+85.28147
+],
+"Tahachal|Kathmandu": [
+27.69976,
+85.29416
+],
+"Tarkeshwor|Kathmandu": [
+27.79277,
+85.30835
+],
+"Tathali|Bhaktapur": [
+27.6654,
+85.46718
+],
+"Tempo Park|Lalitpur": [
+27.65528,
+85.3518
+],
+"Thaiba|Lalitpur": [
+27.62339,
+85.34869
+],
+"Thali|Kathmandu": [
+27.7271,
+85.40445
+],
+"Thamel|Kathmandu": [
+27.71666,
+85.3127
+],
+"Thankot Checkpost|Kathmandu": null,
+"Thankot|Kathmandu": [
+27.69029,
+85.21558
+],
+"Thecho|Lalitpur": [
+27.61413,
+85.32067
+],
+"Thimi|Bhaktapur": [
+27.67326,
+85.3864
+],
+"Thulobharyang|Kathmandu": null,
+"Tikathali|Lalitpur": [
+27.65803,
+85.36104
+],
+"Tilottama|Rupandehi": [
+27.62148,
+83.4635
+],
+"Tinkune|Kathmandu": [
+27.68521,
+85.34865
+],
+"Tinthana|Kathmandu": [
+27.68811,
+85.26987
+],
+"Tokha|Kathmandu": [
+27.74557,
+85.32643
+],
+"Urlabari|Morang": [
+26.66379,
+87.63806
+],
+"|Baglung": [
+28.26568,
+83.59725
+],
+"|Banke": [
+28.05105,
+81.62346
+],
+"|Bara": [
+27.03177,
+85.01222
+],
+"|Bhaktapur": [
+27.67894,
+85.42674
+],
+"|Chitwan": [
+27.68123,
+84.43318
+],
+"|Dang": [
+28.03457,
+82.47982
+],
+"|Dhading": [
+27.91147,
+84.8981
+],
+"|Dhanusha": [
+26.72529,
+85.9305
+],
+"|Dolakha": [
+27.63298,
+86.23242
+],
+"|Gorkha": [
+27.99495,
+84.628
+],
+"|Ilam": [
+26.88541,
+87.92031
+],
+"|Jhapa": [
+26.58374,
+87.8857
+],
+"|Kapilvastu": null,
+"|Kaski": [
+28.20223,
+83.9692
+],
+"|Kathmandu": [
+27.69211,
+85.32556
+],
+"|Kavrepalanchok": [
+27.62795,
+85.52345
+],
+"|Lalitpur": [
+27.66585,
+85.32243
+],
+"|Mahottari": [
+26.64729,
+85.7983
+],
+"|Makwanpur": null,
+"|Morang": null,
+"|Nawalparasi": [
+27.67317,
+84.20833
+],
+"|Nuwakot": [
+27.91393,
+85.14208
+],
+"|Parsa": [
+27.03084,
+84.8851
+],
+"|Rupandehi": [
+27.5035,
+83.45212
+],
+"|Sindhupalchok": null,
+"|Sunsari": [
+26.58827,
+87.13876
+],
+"|Tanahun": [
+27.9765,
+84.26595
+]
+}

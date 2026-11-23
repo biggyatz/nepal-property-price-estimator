@@ -208,3 +208,7 @@ td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
 .leaflet-tooltip.map-tip .row { display: flex; justify-content: space-between; gap: 14px; color: var(--text-2); }
 .leaflet-tooltip.map-tip .row span:last-child { color: var(--text); font-variant-numeric: tabular-nums; }
 .leaflet-tooltip-top.map-tip::before { border-top-color: var(--raised); }
+/* Quiet, desaturated basemap so the data marks carry the colour; inverted in dark mode. */
+.base-tiles { filter: grayscale(1) contrast(.9) brightness(1.04); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .base-tiles { filter: grayscale(1) invert(1) brightness(.85) contrast(.9); } }
+:root[data-theme="dark"] .base-tiles { filter: grayscale(1) invert(1) brightness(.85) contrast(.9); }

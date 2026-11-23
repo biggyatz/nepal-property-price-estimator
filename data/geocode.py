@@ -78,7 +78,10 @@ if __name__ == "__main__":
         try:
             p = nominatim(q)
         except Exception as e:
-            print("ERR", q, e, file=sys.stderr); continue
+            print("ERR", q, e, file=sys.stderr)
+            if "429" in str(e) or "629" in str(e):
+                print("Nominatim asks us to slow down; stopping until the next run", file=sys.stderr); break
+            continue
         centre = cache.get(key(None, d))
         if p and name and centre and km(centre, p) > 60:
             p = None                           # same name elsewhere in Nepal
