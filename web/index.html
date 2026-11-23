@@ -6,6 +6,7 @@
 <title>Nepal Property Price Estimator</title>
 <meta name="description" content="Estimate the asking price of a house or land in Nepal from real listings: Kathmandu Valley, Pokhara, Chitwan, Butwal, Itahari, Birtamod and beyond.">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -62,15 +63,35 @@
         <h2 id="map-title">Prices across Nepal</h2>
         <p class="sub" id="map-sub">Each circle is an area: darker means a higher median asking price per aana, bigger means more listings. Switch to the heatmap to see where listings cluster.</p>
       </div>
+      <button class="ghost" data-table-toggle="map">Show table</button>
     </div>
     <div class="controls">
       <div class="chips" id="map-type" role="radiogroup" aria-label="Property type"></div>
       <div class="chips" id="map-layer" role="radiogroup" aria-label="Map layer"></div>
       <div class="chips" id="map-period" role="radiogroup" aria-label="Listing period"></div>
+      <label class="select" id="map-site-wrap" hidden><span>Site</span><select id="map-site"></select></label>
     </div>
     <div class="map" id="map" role="region" aria-label="Map of asking prices per aana by area"></div>
     <div class="legend map-legend" id="map-legend"></div>
     <p class="note" id="map-note"></p>
+    <div class="table-view" id="map-table" hidden></div>
+  </section>
+
+  <section class="card" aria-labelledby="lst-title">
+    <div class="card-head">
+      <div>
+        <h2 id="lst-title">All listings</h2>
+        <p class="sub" id="lst-sub">Every listing behind the estimates, with the site it came from. Click a title to open the original listing, or “Map” to see where it is.</p>
+      </div>
+    </div>
+    <div class="controls">
+      <label class="select grow"><span>Search</span><input type="search" id="lst-q" placeholder="Title, locality or town"></label>
+      <label class="select"><span>Site</span><select id="lst-site"></select></label>
+      <label class="select"><span>District</span><select id="lst-district"></select></label>
+      <label class="select"><span>Type</span><select id="lst-type"><option value="">House and land</option><option>House</option><option>Land</option></select></label>
+    </div>
+    <div class="table-view lst-table" id="lst-table"></div>
+    <div class="pager" id="lst-pager"></div>
   </section>
 
   <section class="card" aria-labelledby="mkt-title">
@@ -94,8 +115,10 @@
       </div>
       <button class="ghost" data-table-toggle="hot">Show table</button>
     </div>
-    <div class="controls"><div class="chips" id="hot-type" role="radiogroup" aria-label="Property type"></div></div>
+    <div class="controls"><div class="chips" id="hot-type" role="radiogroup" aria-label="Property type"></div><div class="chips" id="hot-view" role="radiogroup" aria-label="View"></div></div>
     <div class="chart" id="hot-chart"></div>
+    <div class="map map-sm" id="hot-map" role="region" aria-label="Map of hotspot towns by price per aana" hidden></div>
+    <div class="legend map-legend" id="hot-legend"></div>
     <p class="insight" id="hot-insight" hidden></p>
     <div class="table-view" id="hot-table" hidden></div>
   </section>
@@ -114,6 +137,7 @@
 <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script src="predict.js"></script>
 <script src="app.js"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fd97ec722df2403296b1214b6654de0b"}'></script><!-- End Cloudflare Web Analytics -->

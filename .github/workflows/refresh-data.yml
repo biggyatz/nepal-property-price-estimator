@@ -54,4 +54,6 @@ jobs:
           if git diff --cached --quiet; then echo "No new listings"; exit 0; fi
           N=$(python3 -c "import json;print(json.load(open('web/model.json'))['n'])")
           git commit -q -m "Refresh listings: ${N} in the model"
+          # main may have moved while this run was crawling; replay this commit on top.
+          git pull -q --rebase -X theirs origin main
           git push origin HEAD:main

@@ -1,6 +1,6 @@
 """Incremental, polite crawler for Nepali property portals that publish sitemaps.
 
-    python crawl_sites.py basobaas npb gharghaderi [--budget-min 40] [--max 0]
+    python crawl_sites.py basobaas npb gharjagganepal gharghaderi [--budget-min 40] [--max 0]
 
 For each site the property sitemap is read, and only pages that are new, or whose
 sitemap <lastmod> changed since the last visit, are fetched. Each visit appends one
@@ -10,7 +10,7 @@ file doubles as the crawler's memory between runs (it is committed with the repo
 Only property attributes are kept: type, title, address/place, price, land area, road,
 floors, rooms, listing dates and (where the site publishes them) map coordinates.
 Seller names, phone numbers, e-mails and free-text descriptions are never stored.
-robots.txt of all three sites allows these pages (checked November 2026).
+robots.txt of all four sites allows these pages (checked November 2026).
 """
 import argparse, html, json, os, re, sys, time, urllib.request
 from datetime import date
@@ -158,8 +158,8 @@ def parse_gharghaderi(url, final, page):
     rec["title"] = clean(html.unescape(m.group(1)).split("|")[0].split(" - Ghar")[0].strip()) if m else None
     owner = L.index("Owner Information") if "Owner Information" in L else -1
     loc = L.index("Location") if "Location" in L else 0
-    for i in range(loc, len(L) - 1):
-        if owner <= i < loc:               # never read the owner block
+    for i in range(min(owner, loc) if owner >= 0 else loc, len(L) - 1):
+        if owner <= i < loc and L[i] not in ("Date :", "Status :"):   # from the owner block only the date and status
             continue
         if L[i] in GG_KEYS and L[i + 1] not in GG_KEYS and L[i + 1] not in ("Property Details", "Location", "Owner Information"):
             rec[L[i].rstrip(" :").lower().replace(" ", "_")] = clean(L[i + 1])
@@ -172,9 +172,44 @@ def parse_gharghaderi(url, final, page):
             break
     return rec
 
+# ------------------------------------------------------- gharjagganepal.com (GeoDirectory)
+GJ_KEYS = {"Price:", "Property Status:", "Property Type:", "Published:", "Modified:", "Address:", "Municipality:", "District:",
+           "Bedrooms:", "Bathrooms:", "Floors:", "Land Area:", "Area:", "Road:", "Road Size:"}
+
+def parse_gharjagganepal(url, final, page):
+    if "/properties/" not in final:
+        return {"gone": True}
+    L = lines_of(page)
+    rec = {}
+    m = re.search(r"<title>(.*?)</title>", page, re.S)
+    rec["title"] = clean(html.unescape(m.group(1)).split(" - Ghar Jagga Nepal")[0].strip()) if m else None
+    d = L.index("Details") if "Details" in L else None
+    if d is None:
+        return {"gone": True}
+    for i in range(d + 1, min(d + 60, len(L) - 1)):
+        if L[i] in GJ_KEYS and L[i + 1] not in GJ_KEYS:
+            rec[L[i].rstrip(":").lower().replace(" ", "_")] = clean(L[i + 1])
+    m = re.search(r'"geo":\{"@type":"GeoCoordinates","latitude":(-?[\d.]+),"longitude":(-?[\d.]+)', page)
+    if m:
+        rec["lat"], rec["lon"] = round(float(m.group(1)), 5), round(float(m.group(2)), 5)
+    # Land area and road width are written in the description; keep the values only.
+    desc = " ".join(L[L.index("Description") + 1:L.index("Features") if "Features" in L else d]) if "Description" in L else ""
+    m = re.search(r"Land Area:?\**:?\s*([\d.]+\s*(?:ropani|aana|ana|anna|paisa|dam|daam|dhur|kattha|kaththa|katha|bigha)(?:[\s,]*[\d.]+\s*(?:aana|ana|paisa|dam|daam|dhur|kattha|kaththa))*)", desc, re.I)
+    if m:
+        rec["land_area"] = m.group(1).strip()
+    m = re.search(r"Road Width:?\**:?\s*([\d.]+)\s*(ft|feet|foot|metres?|meters?|m)\b", desc, re.I)
+    if m:
+        v = float(m.group(1))
+        rec["road_ft"] = round(v * 3.281, 1) if m.group(2).lower().startswith("m") else v
+    m = re.search(r"(\d(?:\.\d)?)[\s-]*(?:storey|story|storied|floors?|tale)\b", desc, re.I)
+    if m:
+        rec["storeys"] = float(m.group(1))
+    return rec
+
 SITES = {
     "basobaas": ("https://basobaas.com/sitemap.xml", lambda u: "/property/" in u and not re.search(r"rent|lease|hostel|office|shutter|space|room-|bhk", u.lower()), parse_basobaas),
     "npb": ("https://nepalpropertybazaar.com/sitemap.xml", lambda u: "/property/" in u and not re.search(r"rent|room|shutter|space|hostel|office", u.lower()), parse_npb),
+    "gharjagganepal": ("https://gharjagganepal.com/gd_place-sitemap.xml", lambda u: re.search(r"/properties/[^/]+/[^/]+/[^/]+/$", u) is not None and "rent" not in u.lower(), parse_gharjagganepal),
     "gharghaderi": ("https://www.gharghaderi.com/sitemap.xml", lambda u: re.search(r"gharghaderi\.com/(land|house|land-for-sale|house-for-sale)/\d+", u) is not None and not re.search(r"rent|lease|room|flat|office", u.lower()), parse_gharghaderi),
 }
 

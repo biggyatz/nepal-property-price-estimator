@@ -22,7 +22,7 @@ for r in df.itertuples():
         p, geo = lookup(cache, r.district, s(getattr(r, "city", None)), s(r.locality))
     rows.append({"title": r.title[:90], "type": r.type, "locality": s(r.locality), "district": r.district,
                  "city": s(getattr(r, "city", None)), "price": int(r.price_npr), "area": round(float(r.area_aana), 3),
-                 "url": r.url, "source": r.source, "year": int(r.year), "listed": str(r.listed)[:7],
+                 "url": r.url, "source": r.source, "year": int(r.year), "listed": str(r.listed)[:10],
                  "lat": p[0] if p else None, "lon": p[1] if p else None, "geo": geo})
 model["geo_coverage"] = {k: sum(x["geo"] == k for x in rows) for k in ("pin", "locality", "town", "district", None) if k}
 json.dump(model, open(f"{out_dir}/model.json", "w"), separators=(",", ":"))

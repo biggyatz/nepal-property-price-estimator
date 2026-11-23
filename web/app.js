@@ -58,11 +58,12 @@ function init() {
   chips("mkt-type", ["House", "Land"], "House", v => { mktType = v; renderMarket(); });
   chips("mkt-region", ["All of Nepal", "Kathmandu Valley", "Outside the Valley"], mktRegion, v => { mktRegion = v; renderMarket(); });
   chips("hot-type", ["Land", "House"], hotType, v => { hotType = v; renderHotspots(); });
+  chips("hot-view", ["Chart", "Map"], hotView, v => { hotView = v; renderHotspots(); });
   document.querySelectorAll("[data-table-toggle]").forEach(btn => btn.addEventListener("click", () => {
     const t = el(btn.dataset.tableToggle + "-table"); t.hidden = !t.hidden; btn.textContent = t.hidden ? "Show table" : "Hide table";
   }));
   renderAbout();
-  update(); renderMarket(); renderHotspots(); initMap();
+  update(); renderMarket(); renderHotspots(); initMap(); initListings();
   let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { update(); renderMarket(); renderHotspots(); }, 120); });
 }
 
@@ -143,7 +144,7 @@ function renderComps(x, est) {
     </a>`).join("") || `<p class="sub">No listings in this district yet.</p>`;
 }
 
-let mktType = "House", mktRegion = "All of Nepal", hotType = "Land";
+let mktType = "House", mktRegion = "All of Nepal", hotType = "Land", hotView = "Chart", HOTMAP, hotLayer;
 const inRegion = r => mktRegion === "All of Nepal" || (mktRegion === "Kathmandu Valley") === VALLEY.has(r.district);
 function renderMarket() {
   const groups = {};
@@ -229,12 +230,22 @@ function renderHotspots() {
   const up = rows.filter(r => r.chg != null).sort((a, b) => b.chg - a.chg)[0];
   el("hot-insight").hidden = !top.length;
   el("hot-insight").textContent = top.length ? `Priciest ${hotType.toLowerCase()} outside the Valley right now: ${top.join(", ")}.` + (up ? ` Biggest rise since 2021–23: ${up.city} (${pct(up.chg)}).` : "") : "";
+  renderHotMap(rows);
   el("hot-table").innerHTML = `<table><thead><tr><th>Town</th><th>District</th><th class="n">Median per aana</th><th class="n">Listings</th><th class="n">vs 2021–23</th></tr></thead><tbody>` +
     rows.map(r => `<tr><td>${esc(r.city)}${r.recent ? "" : " *"}</td><td>${esc(r.dist)}</td><td class="n">${npr(r.med)}</td><td class="n">${r.k}</td><td class="n">${pct(r.chg)}</td></tr>`).join("") + "</tbody></table>";
 }
 
 // ---- Map: price per aana by area (bubbles) and where listings cluster (heatmap) ----
-const mapState = { type: "Land", layer: "Price per aana", period: "Last 2 years" };
+const mapState = { type: "Land", layer: "Price per aana", period: "Last 2 years", site: "" };
+const SITE_INFO = {
+  "nepalpropertybazaar.com": ["Nepal Property Bazaar", "NPB"], "basobaas.com": ["Basobaas", "BB"],
+  "gharjagganepal.com": ["Ghar Jagga Nepal", "GJN"], "gharghaderi.com": ["Gharghaderi", "GG"],
+  "hamrobazaar.com": ["Hamrobazaar", "HB"], "99aana.com": ["99aana", "99A"],
+};
+const siteName = s => (SITE_INFO[s] || [s])[0];
+const siteCode = s => (SITE_INFO[s] || [null, s.slice(0, 3).toUpperCase()])[1];
+const siteList = () => Object.entries(L_.reduce((a, r) => (a[r.source] = (a[r.source] || 0) + 1, a), {})).sort((a, b) => b[1] - a[1]);
+const markers = new Map();
 let MAP, mapLayer;
 const dark = () => document.documentElement.dataset.theme === "dark" ||
   (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
@@ -243,7 +254,7 @@ const RAMP_LIGHT = ["#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#104281"];
 const RAMP_DARK = ["#184f95", "#256abf", "#3987e5", "#6da7ec", "#b7d3f6"];
 
 function initMap() {
-  if (typeof L === "undefined" || !L_.map) { el("map").innerHTML = `<p class="sub" style="padding:16px">The map could not load.</p>`; return; }
+  if (typeof L === "undefined" || !L.map) { el("map").innerHTML = `<p class="sub" style="padding:16px">The map could not load.</p>`; return; }
   MAP = L.map("map", { scrollWheelZoom: false, zoomSnap: 0.5 }).setView([28.2, 84.1], 7);
   MAP.fitBounds([[26.35, 80.06], [30.45, 88.2]]);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -251,7 +262,10 @@ function initMap() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(MAP);
   chips("map-type", ["Land", "House"], mapState.type, v => { mapState.type = v; renderMap(); });
-  chips("map-layer", ["Price per aana", "Listing heatmap"], mapState.layer, v => { mapState.layer = v; renderMap(); });
+  chips("map-layer", ["Price per aana", "Listing heatmap", "Listings"], mapState.layer, v => { mapState.layer = v; renderMap(); });
+  const sites = siteList();
+  el("map-site").innerHTML = `<option value="">All sites</option>` + sites.map(([s, n]) => `<option value="${esc(s)}">${esc(siteName(s))} (${n})</option>`).join("");
+  el("map-site").addEventListener("change", e => { mapState.site = e.target.value; renderMap(); });
   chips("map-period", ["Last 2 years", "All years"], mapState.period, v => { mapState.period = v; renderMap(); });
   renderMap();
 }
@@ -265,7 +279,10 @@ function renderMap() {
   if (!MAP) return;
   if (mapLayer) { MAP.removeLayer(mapLayer); mapLayer = null; }
   const rows = mapRows(), legend = el("map-legend");
+  el("map-site-wrap").hidden = mapState.layer !== "Listings";
+  if (mapState.layer === "Listings") { renderListingMarkers(rows); return; }
   if (mapState.layer === "Listing heatmap") {
+    renderMapTable(mapAreas(rows));
     // District-centre points would create false hot spots, so only pins, localities and towns.
     const pts = rows.filter(r => r.geo !== "district").map(r => [r.lat, r.lon, 1]);
     mapLayer = L.heatLayer(pts, { radius: 16, blur: 20, maxZoom: 9, max: 0.6, minOpacity: 0.3,
@@ -274,29 +291,159 @@ function renderMap() {
     el("map-note").textContent = `${pts.length.toLocaleString("en-IN")} ${mapState.type.toLowerCase()} listings placed by map pin, locality or town.`;
     return;
   }
-  // Group by area: locality where known, else town, else district.
+  const areas = mapAreas(rows);
+  renderMapTable(areas);
+  if (!areas.length) { legend.innerHTML = ""; el("map-note").textContent = "Not enough listings for this selection."; return; }
+  const b = bubbles(areas, mapState.type);
+  mapLayer = b.layer.addTo(MAP);
+  legend.innerHTML = b.legend;
+  el("map-note").textContent = `${areas.length} areas with at least 3 ${mapState.type.toLowerCase()} listings. Areas are placed at the listings' map pins where the site publishes them, otherwise at the locality or town centre.`;
+}
+
+// Group listings by area (locality where known, else town, else district).
+function mapAreas(rows) {
   const groups = {};
   rows.forEach(r => {
     const name = r.geo === "district" ? r.district : (r.geo === "town" ? r.city : r.locality) || r.district;
     const k = name + "|" + r.district;
-    const g = groups[k] = groups[k] || { name, dist: r.district, v: [], lat: [], lon: [], level: r.geo };
-    g.v.push(r.price / r.area); g.lat.push(r.lat); g.lon.push(r.lon);
+    const g = groups[k] = groups[k] || { name, dist: r.district, v: [], lat: [], lon: [], pins: 0 };
+    g.v.push(r.price / r.area); g.lat.push(r.lat); g.lon.push(r.lon); if (r.geo === "pin") g.pins++;
   });
-  const areas = Object.values(groups).filter(g => g.v.length >= 3).map(g => ({ ...g, med: median(g.v), n: g.v.length, la: median(g.lat), lo: median(g.lon) }));
-  if (!areas.length) { legend.innerHTML = ""; el("map-note").textContent = "Not enough listings for this selection."; return; }
-  // Quintile bins so every shade is used whatever the price range.
+  return Object.values(groups).filter(g => g.v.length >= 3)
+    .map(g => ({ ...g, med: median(g.v), n: g.v.length, la: median(g.lat), lo: median(g.lon) }))
+    .sort((a, b) => b.med - a.med);
+}
+
+// Circles coloured by quintile of median price per aana (one-hue ramp), sized by listing count.
+function bubbles(areas, type) {
   const sorted = areas.map(a => a.med).sort((a, b) => a - b);
   const cuts = [0.2, 0.4, 0.6, 0.8].map(q => sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))]);
   const ramp = dark() ? RAMP_DARK : RAMP_LIGHT, ring = getComputedStyle(document.documentElement).getPropertyValue("--raised").trim() || "#fff";
   const bin = v => cuts.filter(c => v >= c).length;
   const maxN = Math.max(...areas.map(a => a.n));
-  mapLayer = L.layerGroup(areas.sort((a, b) => b.n - a.n).map(a => {
+  const layer = L.layerGroup([...areas].sort((a, b) => b.n - a.n).map(a => {
     const m = L.circleMarker([a.la, a.lo], { radius: 5 + 11 * Math.sqrt(a.n / maxN), color: ring, weight: 2, fillColor: ramp[bin(a.med)], fillOpacity: 0.9 });
-    m.bindTooltip(`<b>${esc(a.name)}${a.name !== a.dist ? ", " + esc(a.dist) : ""}</b><div class="row"><span>Median per aana</span><span>${npr(a.med)}</span></div><div class="row"><span>${esc(mapState.type)} listings</span><span>${a.n}</span></div>`, { className: "map-tip", direction: "top", offset: [0, -4] });
+    m.bindTooltip(`<b>${esc(a.name)}${a.name !== a.dist ? ", " + esc(a.dist) : ""}</b><div class="row"><span>Median per aana</span><span>${npr(a.med)}</span></div><div class="row"><span>${esc(type)} listings</span><span>${a.n}</span></div>`, { className: "map-tip", direction: "top", offset: [0, -4] });
     return m;
-  })).addTo(MAP);
+  }));
   const edges = [sorted[0], ...cuts, sorted[sorted.length - 1]];
-  legend.innerHTML = `<span class="key">Median asking price per aana</span>` + ramp.map((c, i) =>
+  const legend = `<span class="key">Median asking price per aana</span>` + ramp.map((c, i) =>
     `<span class="lbl-row"><span class="sw" style="background:${c}"></span>${nprShort(edges[i])}–${nprShort(edges[i + 1])}</span>`).join("");
-  el("map-note").textContent = `${areas.length} areas with at least 3 ${mapState.type.toLowerCase()} listings. Areas are placed at the listings' map pins where the site publishes them, otherwise at the locality or town centre.`;
+  return { layer, legend };
+}
+
+function renderMapTable(areas) {
+  el("map-table").innerHTML = areas.length ? `<table><thead><tr><th>Area</th><th>District</th><th class="n">Median per aana</th><th class="n">Listings</th><th class="n">With map pin</th></tr></thead><tbody>` +
+    areas.map(a => `<tr><td>${esc(a.name)}</td><td>${esc(a.dist)}</td><td class="n">${npr(a.med)}</td><td class="n">${a.n}</td><td class="n">${a.pins}</td></tr>`).join("") + "</tbody></table>"
+    : `<p class="sub">Not enough listings for this selection.</p>`;
+}
+
+// Hotspot towns on a map: same colour scale as the main map, one circle per town.
+function renderHotMap(rows) {
+  const box = el("hot-map"), chart = el("hot-chart");
+  box.hidden = hotView !== "Map"; chart.hidden = hotView === "Map";
+  if (hotView !== "Map" || typeof L === "undefined" || !L.map) { el("hot-legend").innerHTML = ""; return; }
+  if (!HOTMAP) {
+    HOTMAP = L.map("hot-map", { scrollWheelZoom: false, zoomSnap: 0.5 });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 17, className: "base-tiles",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(HOTMAP);
+  }
+  HOTMAP.invalidateSize();
+  if (hotLayer) { HOTMAP.removeLayer(hotLayer); hotLayer = null; }
+  const type = hotType;
+  const areas = rows.map(r => {
+    const pts = L_.filter(x => x.city === r.city && x.district === r.dist && x.lat != null);
+    return pts.length ? { name: r.city, dist: r.dist, med: r.med, n: r.k, la: median(pts.map(p => p.lat)), lo: median(pts.map(p => p.lon)) } : null;
+  }).filter(Boolean);
+  if (!areas.length) { el("hot-legend").innerHTML = ""; return; }
+  const b = bubbles(areas, type);
+  hotLayer = b.layer.addTo(HOTMAP);
+  el("hot-legend").innerHTML = b.legend;
+  HOTMAP.fitBounds(L.latLngBounds(areas.map(a => [a.la, a.lo])).pad(0.25), { maxZoom: 9 });
+}
+
+// One marker per listing, labelled with its site's short code; nearby markers cluster.
+function renderListingMarkers(rows) {
+  rows = rows.filter(r => !mapState.site || r.source === mapState.site);
+  markers.clear();
+  const group = L.markerClusterGroup ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 45, spiderfyOnMaxZoom: true }) : L.layerGroup();
+  rows.forEach(r => {
+    const code = siteCode(r.source), w = 10 + code.length * 7;
+    const m = L.marker([r.lat, r.lon], { icon: L.divIcon({ className: "lst-pin", html: esc(code), iconSize: [w, 20], iconAnchor: [w / 2, 10] }), title: `${r.title} (${siteName(r.source)})` });
+    m.bindPopup(listingPopup(r));
+    markers.set(r, m);
+    group.addLayer(m);
+  });
+  mapLayer = group.addTo(MAP);
+  const sites = [...new Set(rows.map(r => r.source))];
+  el("map-legend").innerHTML = `<span class="key">Site codes:</span>` + sites.map(s => `<span class="lbl-row"><span class="site">${esc(siteCode(s))}</span>${esc(siteName(s))}</span>`).join("");
+  const pins = rows.filter(r => r.geo === "pin").length;
+  el("map-note").textContent = `${rows.length.toLocaleString("en-IN")} ${mapState.type.toLowerCase()} listings; ${pins.toLocaleString("en-IN")} at the site's own map pin, the rest at their locality, town or district centre (zoom in to separate them). Click a marker for details and the link.`;
+  renderMapTable(mapAreas(rows));
+}
+
+function listingPopup(r) {
+  const placed = { pin: "site's map pin", locality: "locality centre", town: "town centre", district: "district centre" }[r.geo] || "";
+  return `<b>${esc(r.title)}</b>` +
+    `<div class="row"><span>Price</span><span>${npr(r.price)}</span></div>` +
+    `<div class="row"><span>Land</span><span>${r.area.toFixed(2)} aana · ${nprShort(r.price / r.area)}/aana</span></div>` +
+    `<div class="row"><span>Place</span><span>${esc([r.locality, r.district].filter(Boolean).join(", "))}</span></div>` +
+    `<div class="row"><span>Listed</span><span>${esc(r.listed || r.year)}</span></div>` +
+    `<div class="row"><span>Site</span><span>${esc(siteName(r.source))}</span></div>` +
+    `<div class="row"><span>On map at</span><span>${esc(placed)}</span></div>` +
+    `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">Open the listing on ${esc(siteName(r.source))} ↗</a>`;
+}
+
+// ---- Table of all listings, with the site each one came from ----
+const lst = { q: "", site: "", district: "", type: "", sort: "listed", dir: -1, page: 0, per: 25 };
+function initListings() {
+  el("lst-site").innerHTML = `<option value="">All sites</option>` + siteList().map(([s, n]) => `<option value="${esc(s)}">${esc(siteName(s))} (${n})</option>`).join("");
+  const ds = [...new Set(L_.map(r => r.district).filter(Boolean))].sort();
+  el("lst-district").innerHTML = `<option value="">All districts</option>` + ds.map(d => `<option>${esc(d)}</option>`).join("");
+  let t;
+  el("lst-q").addEventListener("input", e => { clearTimeout(t); t = setTimeout(() => { lst.q = e.target.value.trim().toLowerCase(); lst.page = 0; renderListings(); }, 150); });
+  for (const k of ["site", "district", "type"]) el("lst-" + k).addEventListener("change", e => { lst[k] = e.target.value; lst.page = 0; renderListings(); });
+  renderListings();
+}
+
+function renderListings() {
+  const rows = L_.filter(r => (!lst.site || r.source === lst.site) && (!lst.district || r.district === lst.district) && (!lst.type || r.type === lst.type) &&
+    (!lst.q || `${r.title} ${r.locality || ""} ${r.city || ""} ${r.district}`.toLowerCase().includes(lst.q)));
+  const key = { listed: r => r.listed || String(r.year), price: r => r.price, per: r => r.price / r.area, area: r => r.area }[lst.sort];
+  rows.sort((a, b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * lst.dir);
+  const pages = Math.max(1, Math.ceil(rows.length / lst.per));
+  lst.page = Math.min(lst.page, pages - 1);
+  const show = rows.slice(lst.page * lst.per, (lst.page + 1) * lst.per);
+  const th = (k, label, cls = "n") => `<th class="${cls}"><button data-sort="${k}" data-dir="${lst.sort === k ? (lst.dir > 0 ? "▲" : "▼") : ""}" aria-sort="${lst.sort === k ? (lst.dir > 0 ? "ascending" : "descending") : "none"}">${label}</button></th>`;
+  el("lst-table").innerHTML = `<table><thead><tr><th>Listing</th><th class="hide-sm">Site</th><th class="hide-sm">Type</th><th class="hide-sm">Place</th>` +
+    th("area", "Land (aana)", "n hide-sm") + th("price", "Price") + th("per", "Per aana") + th("listed", "Listed", "n hide-sm") + `<th class="n">Map</th></tr></thead><tbody>` +
+    show.map((r, i) => `<tr><td class="t"><a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)}</a>` +
+      `<span class="show-sm"><span class="site">${esc(siteName(r.source))}</span> ${esc([r.locality, r.district].filter(Boolean).join(", "))}</span></td>` +
+      `<td class="hide-sm"><span class="site">${esc(siteName(r.source))}</span></td><td class="hide-sm">${esc(r.type)}</td>` +
+      `<td class="hide-sm">${esc([r.locality, r.district].filter(Boolean).join(", "))}</td><td class="n hide-sm">${r.area.toFixed(2)}</td>` +
+      `<td class="n">${nprShort(r.price)}</td><td class="n">${nprShort(r.price / r.area)}</td><td class="n hide-sm">${esc(r.listed || r.year)}</td>` +
+      `<td class="n">${r.lat != null ? `<button class="ghost sm" data-map="${lst.page * lst.per + i}">Map</button>` : "–"}</td></tr>`).join("") +
+    `</tbody></table>` + (rows.length ? "" : `<p class="sub">No listings match.</p>`);
+  el("lst-pager").innerHTML = `<span>${rows.length.toLocaleString("en-IN")} listings · page ${lst.page + 1} of ${pages}</span>` +
+    `<span class="btns"><button class="ghost" data-page="-1" ${lst.page ? "" : "disabled"}>Previous</button><button class="ghost" data-page="1" ${lst.page < pages - 1 ? "" : "disabled"}>Next</button></span>`;
+  el("lst-table").querySelectorAll("[data-sort]").forEach(b => b.addEventListener("click", () => {
+    const k = b.dataset.sort; lst.dir = lst.sort === k ? -lst.dir : -1; lst.sort = k; renderListings();
+  }));
+  el("lst-table").querySelectorAll("[data-map]").forEach(b => b.addEventListener("click", () => showOnMap(rows[+b.dataset.map])));
+  el("lst-pager").querySelectorAll("[data-page]").forEach(b => b.addEventListener("click", () => { lst.page += +b.dataset.page; renderListings(); }));
+}
+
+// Switch the map to the listings layer and open this listing's marker.
+function showOnMap(r) {
+  if (!MAP) return;
+  Object.assign(mapState, { layer: "Listings", type: r.type, period: "All years", site: "" });
+  for (const [id, v] of [["map-layer", "Listings"], ["map-type", r.type], ["map-period", "All years"]])
+    el(id).querySelectorAll(".chip").forEach(c => c.setAttribute("aria-checked", c.dataset.v === v));
+  el("map-site").value = "";
+  renderMap();
+  el("map").scrollIntoView({ behavior: "smooth", block: "center" });
+  const m = markers.get(r);
+  if (!m) return;
+  if (mapLayer.zoomToShowLayer) mapLayer.zoomToShowLayer(m, () => m.openPopup());
+  else { MAP.setView(m.getLatLng(), 14); m.openPopup(); }
 }

@@ -29,7 +29,7 @@ def scrub_file(path):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sites", nargs="*", default=["basobaas", "npb", "gharghaderi"])
+    ap.add_argument("--sites", nargs="*", default=["basobaas", "npb", "gharjagganepal", "gharghaderi"])
     ap.add_argument("--hamrobazaar", action="store_true")
     ap.add_argument("--budget-min", type=float, default=25)
     a = ap.parse_args()

@@ -15,6 +15,7 @@ Counts are the for-sale house/land pages in each site's sitemap or search on
 | [nepalpropertybazaar.com](https://nepalpropertybazaar.com) | ~4,000 | ~1,470 | All Nepal; strong on the Valley, Pokhara, Chitwan, the eastern Terai | Sitemap + property pages (`crawl_sites.py npb`); pages carry a map pin | Allows all but `/wp-admin/` | **Added.** Rate-limits fast clients with a "please wait" page, so it is read slowly (one page per 4 s) and the crawler backs off when asked |
 | [basobaas.com](https://basobaas.com) | ~5,200 in sitemap, ~950 live | ~640 | Mostly the Valley, some Pokhara and Banepa | Sitemap + property pages (`crawl_sites.py basobaas`) | Allows all but `/dashboard/` | Added (Nov 2026). Sold listings redirect to search and are kept as history |
 | [gharghaderi.com](https://www.gharghaderi.com) | ~3,300 in sitemap | none (sitemap dated April 2025) | All 7 provinces, with district / municipality / ward fields | Sitemap + property pages (`crawl_sites.py gharghaderi`) | No restrictions | **Added.** Many sitemap entries now 404; live ones are 2024–25 asking prices |
+| [gharjagganepal.com](https://gharjagganepal.com) | ~180 | ~180 | Bharatpur/Chitwan, Nawalpur, Banepa and the Valley | Sitemap (`gd_place-sitemap.xml`) + property pages (`crawl_sites.py gharjagganepal`); pages carry a map pin and published date | Allows all | **Added (23 Nov 2026).** Land area and road width are read from the description (values only) |
 | [hamrobazaar.com](https://hamrobazaar.com) | 10+ new property ads a day | daily | All Nepal, free-text titles | Headless browser on search and detail pages (`crawl_hamrobazar*.js`) | Allows `/search/product`, `/detail/` | Added (Oct 2026). Search returns few results per query; daily run covers 29 towns |
 | [99aana.com](https://99aana.com) | ~3,100 | none since Feb 2024 | Mostly the Valley | Sitemap + property pages (`crawl_99aana.py`) | Allows all | Kept as 2021–24 history; no new listings to fetch |
 
@@ -22,10 +23,9 @@ Counts are the for-sale house/land pages in each site's sitemap or search on
 
 | Site | What we found | Why not now |
 | --- | --- | --- |
-| [gharjagganepal.com](https://gharjagganepal.com) | ~180 listings, fresh (2026), strong in Bharatpur and the Valley | Sitemap lists only category pages; would need a crawler for its paged search. Good next candidate |
 | [99ropani.com](https://99ropani.com) | New portal with price estimates and land checks; sitemap lists 1 listing | Too few listings yet; `/api` is disallowed |
 | [gharbazar.com](https://www.gharbazar.com) | 678 property URLs in sitemap | Detail pages sampled redirect to the home page (expired) |
-| [propertynepal.com](https://propertynepal.com) | 79 property URLs, includes auctions | Small; worth adding with gharjagganepal |
+| [propertynepal.com](https://propertynepal.com) | 79 property URLs, includes auctions | Small; next candidate |
 | [nepalhomes.com](https://www.nepalhomes.com) | JavaScript app, no sitemap | Needs a headless-browser crawler like Hamrobazaar |
 | housingnepal.com | Developer association site | Returns HTTP 406 to non-browser clients |
 | nepalproperty.com, merojagga.com, gharjagga.com, hamrogharjagga.com, ghar.com.np, jagga.com.np | Unreachable (connection refused / DNS) in November 2026 | Offline or blocked |

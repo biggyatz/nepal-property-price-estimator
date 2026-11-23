@@ -4,8 +4,8 @@ Inputs (any that exist):
   raw/99aana.jsonl               99aana pages (crawl_99aana.py); if absent, the 99aana rows of
                                  property_listings.csv are re-used and only their places re-parsed
   raw/hamrobazaar_details.jsonl  Hamrobazar detail pages (crawl_hamrobazar_details.js)
-  raw/basobaas.jsonl, raw/npb.jsonl, raw/gharghaderi.jsonl
-                                 Basobaas, Nepal Property Bazaar, Gharghaderi pages (crawl_sites.py)
+  raw/basobaas.jsonl, raw/npb.jsonl, raw/gharghaderi.jsonl, raw/gharjagganepal.jsonl
+                                 Basobaas, Nepal Property Bazaar, Gharghaderi, Ghar Jagga Nepal pages (crawl_sites.py)
   property_listings.csv          previous cleaned table; rows whose raw page is gone (sold,
                                  withdrawn, expired) are kept as historical asking prices
 """
@@ -84,9 +84,13 @@ def from_basobaas(r):
                 rooms=r.get("bedroom") or None, bathrooms=r.get("bathroom") or None, listed=listed)
 
 def _date(text, fmts=("%B %d, %Y", "%b %d, %Y", "%Y-%m-%d")):
+    if not text:
+        return ""
     for f in fmts:
         try:
-            return str(pd.to_datetime(text, format=f).date())
+            d = pd.to_datetime(text, format=f)
+            if not pd.isna(d):
+                return str(d.date())
         except (TypeError, ValueError):
             pass
     return ""
@@ -128,6 +132,25 @@ def from_gharghaderi(r):
                 area_text=r.get("land_area"), floors=first_float(r.get("floor") or r.get("floors") or r.get("no_of_floor")),
                 road_ft=first_float(r.get("road_size")) or GG_ROAD.get(r.get("road_size")), rooms=first_float(r.get("bedroom")), bathrooms=first_float(r.get("bathroom")),
                 listed=_date(r.get("date")) or r.get("lastmod") or "")
+
+def from_gharjagganepal(r):
+    """gharjagganepal.com (GeoDirectory): address / municipality / district fields + map pin."""
+    if r.get("gone") or "sale" not in (r.get("property_status") or "").lower():
+        return None
+    typ = (r.get("property_type") or "").strip()
+    if typ not in ("House", "Land"):
+        return None
+    title = r.get("title") or ""
+    area = r.get("land_area")
+    if not area_sqft(area):
+        m = AREA_IN_TEXT.search(title)
+        area = m.group(1) if m else None
+    muni = re.sub(r"\b(Maha|Upa-?Maha)?nagarpalika\b|\bGaunpalika\b", "", r.get("municipality") or "", flags=re.I).strip()
+    address = ", ".join(x for x in (r.get("address"), muni, r.get("district")) if x)
+    return dict(source="gharjagganepal.com", url=r["url"], title=title, type=typ, address=address,
+                price_text=(r.get("price") or "").replace("Rs", "Rs "), area_text=area, floors=r.get("storeys"),
+                road_ft=r.get("road_ft"), rooms=first_float(r.get("bedrooms")), bathrooms=first_float(r.get("bathrooms")),
+                listed=_date(r.get("published")) or r.get("lastmod") or "", lat=r.get("lat"), lon=r.get("lon"))
 
 def merge_spellings(rows, cutoff=0.9):
     """Map near-identical locality spellings within a district onto the most common one
@@ -239,7 +262,8 @@ if __name__ == "__main__":
     for r in load_jsonl("raw/hamrobazaar_details.jsonl"):
         if r.get("title"):
             rows.append(from_hamrobazar(r))
-    for path, fn in (("raw/basobaas.jsonl", from_basobaas), ("raw/npb.jsonl", from_npb), ("raw/gharghaderi.jsonl", from_gharghaderi)):
+    for path, fn in (("raw/basobaas.jsonl", from_basobaas), ("raw/npb.jsonl", from_npb), ("raw/gharghaderi.jsonl", from_gharghaderi),
+                     ("raw/gharjagganepal.jsonl", from_gharjagganepal)):
         for r in load_jsonl(path):
             x = fn(r)
             if x:

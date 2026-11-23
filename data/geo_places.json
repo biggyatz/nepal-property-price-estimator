@@ -146,6 +146,10 @@
 27.7004,
 83.46577
 ],
+"Chabahil|Kathmandu": [
+27.71718,
+85.34666
+],
 "Chandol|Kathmandu": [
 27.73123,
 85.34072
@@ -165,6 +169,10 @@
 "Changunarayan|Bhaktapur": [
 27.71646,
 85.42799
+],
+"Chapagaun|Lalitpur": [
+27.6579,
+85.32249
 ],
 "Chapali|Kathmandu": [
 27.77697,
@@ -258,6 +266,11 @@
 85.36154
 ],
 "Ekatabasti|Kathmandu": null,
+"Gaidakot|Nawalparasi": [
+27.70291,
+84.39078
+],
+"Gaindakot|Chitwan": null,
 "Gaindakot|Nawalparasi": [
 27.73292,
 84.33984
@@ -398,6 +411,7 @@
 27.73421,
 85.35732
 ],
+"Kathmandu Metropolis|Kathmandu": null,
 "Katunje|Bhaktapur": [
 27.66528,
 85.4026
@@ -450,6 +464,7 @@
 27.71941,
 85.31516
 ],
+"Lalitpur Metropolis|Lalitpur": null,
 "Lamatar|Lalitpur": [
 27.63296,
 85.39002
@@ -457,6 +472,10 @@
 "Lazimpat|Kathmandu": [
 27.72151,
 85.32076
+],
+"Lekhnath|Kaski": [
+28.19901,
+84.07263
 ],
 "Lele|Lalitpur": [
 27.57204,
@@ -547,6 +566,10 @@
 27.7171,
 85.15175
 ],
+"Naxal|Kathmandu": [
+27.71268,
+85.3287
+],
 "Nayapati|Kathmandu": [
 27.74486,
 85.40961
@@ -579,6 +602,10 @@
 "Panipokhari|Kathmandu": [
 27.72925,
 85.32475
+],
+"Parasi|Nawalparasi": [
+27.53087,
+83.67079
 ],
 "Pasikot|Kathmandu": [
 27.77327,
@@ -628,6 +655,10 @@
 "Sainamaina|Rupandehi": [
 27.7284,
 83.24262
+],
+"Sainbu|Lalitpur": [
+27.64933,
+85.30359
 ],
 "Sallaghari|Bhaktapur": [
 27.67327,
@@ -886,6 +917,14 @@
 "|Rupandehi": [
 27.5035,
 83.45212
+],
+"|Saptari": [
+26.54069,
+86.74596
+],
+"|Sindhuli": [
+27.21232,
+85.91361
 ],
 "|Sindhupalchok": null,
 "|Sunsari": [

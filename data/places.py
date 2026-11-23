@@ -10,7 +10,7 @@ DISTRICT_ALIASES = {
     "lalitpur": "Lalitpur", "laliltpur": "Lalitpur", "lalitpr": "Lalitpur", "bhaktapur": "Bhaktapur", "bkt": "Bhaktapur",
     "kaski": "Kaski", "chitwan": "Chitwan", "chitawan": "Chitwan", "rupandehi": "Rupandehi", "morang": "Morang",
     "sunsari": "Sunsari", "jhapa": "Jhapa", "kavre": "Kavrepalanchok", "kavrepalanchok": "Kavrepalanchok",
-    "kabhre": "Kavrepalanchok", "makwanpur": "Makwanpur", "makawanpur": "Makwanpur", "nuwakot": "Nuwakot",
+    "kabhre": "Kavrepalanchok", "kavrepalanchowk": "Kavrepalanchok", "kabhrepalanchok": "Kavrepalanchok", "makwanpur": "Makwanpur", "makawanpur": "Makwanpur", "nuwakot": "Nuwakot",
     "kailali": "Kailali", "banke": "Banke", "dang": "Dang", "surkhet": "Surkhet", "parsa": "Parsa", "bara": "Bara",
     "dhanusha": "Dhanusha", "dhanusa": "Dhanusha", "mahottari": "Mahottari", "sarlahi": "Sarlahi", "rautahat": "Rautahat",
     "saptari": "Saptari", "siraha": "Siraha", "kanchanpur": "Kanchanpur", "bardiya": "Bardiya", "kapilvastu": "Kapilvastu",
