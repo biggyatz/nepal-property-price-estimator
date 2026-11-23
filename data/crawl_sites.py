@@ -178,6 +178,9 @@ SITES = {
     "gharghaderi": ("https://www.gharghaderi.com/sitemap.xml", lambda u: re.search(r"gharghaderi\.com/(land|house|land-for-sale|house-for-sale)/\d+", u) is not None and not re.search(r"rent|lease|room|flat|office", u.lower()), parse_gharghaderi),
 }
 
+# Slowest pace each site has asked for (Nepal Property Bazaar rate-limits faster clients).
+MIN_DELAY = {"npb": 4.0}
+
 def load_state(path):
     state = {}
     if os.path.exists(path):
@@ -188,9 +191,14 @@ def load_state(path):
 
 def crawl(name, budget_s, max_pages, delay):
     index, keep, parse = SITES[name]
+    delay = max(delay, MIN_DELAY.get(name, 0))
     path = os.path.join(RAW, f"{name}.jsonl")
     state = load_state(path)
-    urls = sitemap_urls(index, keep)
+    try:
+        urls = sitemap_urls(index, keep)
+    except Challenged:
+        print(f"{name}: sitemap is rate-limited right now; will try on the next run", file=sys.stderr)
+        return 0
     todo = [u for u, mod in urls.items() if u not in state or (mod and mod > (state[u].get("lastmod") or ""))]
     # Newest first, so a time-limited run always picks up the latest listings.
     todo.sort(key=lambda u: urls[u], reverse=True)
