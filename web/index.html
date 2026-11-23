@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nepal Property Price Estimator</title>
 <meta name="description" content="Estimate the asking price of a house or land in Nepal from real listings: Kathmandu Valley, Pokhara, Chitwan, Butwal, Itahari, Birtamod and beyond.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -55,6 +56,23 @@
     </section>
   </div>
 
+  <section class="card" aria-labelledby="map-title">
+    <div class="card-head">
+      <div>
+        <h2 id="map-title">Prices across Nepal</h2>
+        <p class="sub" id="map-sub">Each circle is an area: darker means a higher median asking price per aana, bigger means more listings. Switch to the heatmap to see where listings cluster.</p>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="chips" id="map-type" role="radiogroup" aria-label="Property type"></div>
+      <div class="chips" id="map-layer" role="radiogroup" aria-label="Map layer"></div>
+      <div class="chips" id="map-period" role="radiogroup" aria-label="Listing period"></div>
+    </div>
+    <div class="map" id="map" role="region" aria-label="Map of asking prices per aana by area"></div>
+    <div class="legend map-legend" id="map-legend"></div>
+    <p class="note" id="map-note"></p>
+  </section>
+
   <section class="card" aria-labelledby="mkt-title">
     <div class="card-head">
       <div>
@@ -94,6 +112,8 @@
   <p>Estimates are based on <strong>asking prices</strong>, which are usually above final sale prices, and are not a valuation. <a href="https://github.com/biggyatz/nepal-property-price-estimator">Source, data pipeline and methodology on GitHub</a></p>
 </footer>
 <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 <script src="predict.js"></script>
 <script src="app.js"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fd97ec722df2403296b1214b6654de0b"}'></script><!-- End Cloudflare Web Analytics -->

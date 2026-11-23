@@ -1,11 +1,13 @@
 """Clean raw property listings (99aana, Hamrobazar, Basobaas) into one table: property.csv.
 
 Inputs (any that exist):
-  raw_99aana_v2.jsonl            99aana pages (crawl_99aana.py); if absent, the 99aana rows of
+  raw/99aana.jsonl               99aana pages (crawl_99aana.py); if absent, the 99aana rows of
                                  property_listings.csv are re-used and only their places re-parsed
-  raw_hamrobazar_re_details.jsonl Hamrobazar detail pages (crawl_hamrobazar_details.js)
-  raw_basobaas.jsonl             Basobaas pages (crawl_basobaas.py)
-  property_listings.csv          previous cleaned table; rows whose raw file is gone are kept
+  raw/hamrobazaar_details.jsonl  Hamrobazar detail pages (crawl_hamrobazar_details.js)
+  raw/basobaas.jsonl, raw/npb.jsonl, raw/gharghaderi.jsonl
+                                 Basobaas, Nepal Property Bazaar, Gharghaderi pages (crawl_sites.py)
+  property_listings.csv          previous cleaned table; rows whose raw page is gone (sold,
+                                 withdrawn, expired) are kept as historical asking prices
 """
 import json, os, re
 from collections import Counter
@@ -16,7 +18,7 @@ from places import split_address, locality_from_text, district_from_words, find_
 AANA = SQFT["aana"]
 DEFAULT_SCRAPED = pd.Timestamp("2026-10-09")
 COLS = ["source", "url", "title", "type", "locality", "city", "district", "address", "price_text", "area_text",
-        "floors", "road_ft", "rooms", "bathrooms", "listed"]
+        "floors", "road_ft", "rooms", "bathrooms", "listed", "lat", "lon"]
 
 def from_99aana(r):
     h = r.get("header") or []
@@ -59,7 +61,7 @@ def from_hamrobazar(r):
 AREA_IN_TEXT = re.compile(r"(\d+(?:\.\d+)?\s*(?:ropani|aana|anna|ana|paisa|dam|daam|dhur|kattha|katha|kathha|bigha)\b(?:\s*\d+(?:\.\d+)?\s*(?:aana|anna|ana|paisa|dam|daam|dhur|kattha|katha))*)", re.I)
 
 def from_basobaas(r):
-    if r.get("purpose") != "Sale" or r.get("category") not in ("House", "Land"):
+    if r.get("gone") or r.get("purpose") != "Sale" or r.get("category") not in ("House", "Land"):
         return None
     title = r.get("title") or ""
     area = (r.get("Land Area") or "").split("/")[0].strip()
@@ -76,13 +78,56 @@ def from_basobaas(r):
     typ = r["category"]
     if typ == "Land" and re.search(r"\bhouse\b", title, re.I) and not re.search(r"\bland\b", title, re.I):
         typ = "House"
-    try:
-        listed = str(pd.to_datetime(r.get("updated"), format="%b %d, %Y").date())
-    except (TypeError, ValueError):
-        listed = ""
+    listed = _date(r.get("updated"))
     return dict(source="basobaas.com", url=r["url"], title=title, type=typ, address=r.get("address"), price_text=price_text,
                 area_text=area, floors=r.get("floors") or None, road_ft=first_float(r.get("Road Access In Feet")),
                 rooms=r.get("bedroom") or None, bathrooms=r.get("bathroom") or None, listed=listed)
+
+def _date(text, fmts=("%B %d, %Y", "%b %d, %Y", "%Y-%m-%d")):
+    for f in fmts:
+        try:
+            return str(pd.to_datetime(text, format=f).date())
+        except (TypeError, ValueError):
+            pass
+    return ""
+
+def from_npb(r):
+    """nepalpropertybazaar.com (Houzez theme): structured price / area / city / area fields + map pin."""
+    if r.get("gone") or "sale" not in (r.get("property_status") or "").lower():
+        return None
+    typ = (r.get("property_type") or "").split(",")[0].strip()
+    if typ not in ("House", "Land"):
+        return None
+    title = r.get("title") or ""
+    price = (r.get("price") or "").replace("Rs", "Rs ")
+    area = r.get("land_area") or r.get("land_area_desc") or r.get("property_size")
+    if area and not area_sqft(area):
+        m = AREA_IN_TEXT.search(title)
+        area = m.group(1) if m else area
+    address = ", ".join(x for x in (r.get("area"), r.get("city")) if x) or r.get("address")
+    return dict(source="nepalpropertybazaar.com", url=r["url"], title=title, type=typ, address=address, price_text=price,
+                area_text=area, floors=first_float(r.get("floors") or r.get("floor")) or r.get("storeys"), road_ft=first_float(r.get("road_access") or r.get("road_size")) or r.get("road_ft"),
+                rooms=first_float(r.get("bedrooms") or r.get("bedroom")), bathrooms=first_float(r.get("bathrooms") or r.get("bathroom")),
+                listed=(r.get("published") or _date(r.get("updated")) or r.get("lastmod") or "")[:10], lat=r.get("lat"), lon=r.get("lon"))
+
+# Gharghaderi stores road width as a band, e.g. "ThirteenToTwentyFeet": use the lower edge.
+GG_ROAD = {"LessThanEightFeet": 6.0, "EightToTwelveFeet": 8.0, "ThirteenToTwentyFeet": 13.0, "TwentyToThirtyFeet": 20.0,
+           "MoreThanThirtyFeet": 30.0, "ThirtyFeetAndAbove": 30.0}
+
+def from_gharghaderi(r):
+    """gharghaderi.com: district / municipality / VDC / tole fields, price with optional 'Per Aana'."""
+    if r.get("gone") or (r.get("status") or "Active").lower() != "active":
+        return None
+    kind = r.get("kind", "")
+    typ = "Land" if kind.startswith("land") else "House" if kind.startswith("house") else None
+    if not typ or not r.get("price"):
+        return None
+    address = ", ".join(x for x in (r.get("tole"), r.get("muncipality") or r.get("municipality"), r.get("vdc"), r.get("district")) if x)
+    price = "Rs " + r["price"] + (" " + r["price_unit"] if r.get("price_unit") else "")
+    return dict(source="gharghaderi.com", url=r["url"], title=r.get("title") or "", type=typ, address=address, price_text=price,
+                area_text=r.get("land_area"), floors=first_float(r.get("floor") or r.get("floors") or r.get("no_of_floor")),
+                road_ft=first_float(r.get("road_size")) or GG_ROAD.get(r.get("road_size")), rooms=first_float(r.get("bedroom")), bathrooms=first_float(r.get("bathroom")),
+                listed=_date(r.get("date")) or r.get("lastmod") or "")
 
 def merge_spellings(rows, cutoff=0.9):
     """Map near-identical locality spellings within a district onto the most common one
@@ -180,6 +225,8 @@ def finalize(rows):
     # The same property is often re-posted on a site under a new URL: keep the newest copy.
     df = df.sort_values("listed", ascending=False)
     df = df.drop_duplicates(subset=["url"]).drop_duplicates(subset=["source", "type", "district", "locality", "price_npr", "area_aana"])
+    # Agents cross-post the same property to several portals: exact same place, price and area.
+    df = df.drop_duplicates(subset=["type", "district", "locality", "price_npr", "area_aana"])
     return df.sort_values(["source", "listed"]).reset_index(drop=True)
 
 def load_jsonl(path):
@@ -187,15 +234,16 @@ def load_jsonl(path):
 
 if __name__ == "__main__":
     rows, have_raw = [], set()
-    for r in load_jsonl("raw_99aana_v2.jsonl"):
+    for r in load_jsonl("raw/99aana.jsonl"):
         rows.append(from_99aana(r)); have_raw.add("99aana.com")
-    for r in load_jsonl("raw_hamrobazar_re_details.jsonl"):
+    for r in load_jsonl("raw/hamrobazaar_details.jsonl"):
         if r.get("title"):
             rows.append(from_hamrobazar(r))
-    for r in load_jsonl("raw_basobaas.jsonl"):
-        x = from_basobaas(r)
-        if x:
-            rows.append(x)
+    for path, fn in (("raw/basobaas.jsonl", from_basobaas), ("raw/npb.jsonl", from_npb), ("raw/gharghaderi.jsonl", from_gharghaderi)):
+        for r in load_jsonl(path):
+            x = fn(r)
+            if x:
+                rows.append(x)
     # Keep earlier cleaned rows whose raw pages are no longer on disk (e.g. 99aana, which
     # has stopped adding listings, and older Hamrobazar posts that have since expired).
     seen = {x["url"] for x in rows}
@@ -207,6 +255,7 @@ if __name__ == "__main__":
             x = {c: (r.get(c) or None) for c in COLS}
             x["address"] = x["address"] if x["address"] and not x["address"].startswith("Rs") else None
             x["floors"], x["road_ft"] = first_float(x["floors"]), first_float(x["road_ft"])
+            x["lat"], x["lon"] = first_float(x["lat"]), first_float(x["lon"])
             if x["source"] == "hamrobazaar.com":    # area/price were already parsed
                 x["area_text"] = x["area_text"] or (f"{float(r['area_aana'])} aana" if r.get("area_aana") else None)
             rows.append(x)

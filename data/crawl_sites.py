@@ -1,0 +1,242 @@
+"""Incremental, polite crawler for Nepali property portals that publish sitemaps.
+
+    python crawl_sites.py basobaas npb gharghaderi [--budget-min 40] [--max 0]
+
+For each site the property sitemap is read, and only pages that are new, or whose
+sitemap <lastmod> changed since the last visit, are fetched. Each visit appends one
+record to raw/<site>.jsonl, so the newest record per URL is the current state and the
+file doubles as the crawler's memory between runs (it is committed with the repo).
+
+Only property attributes are kept: type, title, address/place, price, land area, road,
+floors, rooms, listing dates and (where the site publishes them) map coordinates.
+Seller names, phone numbers, e-mails and free-text descriptions are never stored.
+robots.txt of all three sites allows these pages (checked November 2026).
+"""
+import argparse, html, json, os, re, sys, time, urllib.request
+from datetime import date
+
+UA = "Mozilla/5.0 (compatible; nepal-property-price-estimator; +https://github.com/biggyatz/nepal-property-price-estimator)"
+RAW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "raw")
+PHONE = re.compile(r"(\+?977[-\s]?)?\b9[678]\d[-\s]?\d{3}[-\s]?\d{4}\b")
+
+class Challenged(Exception):
+    """The site answered with an anti-bot "please wait" page: we are going too fast."""
+
+def fetch(url, timeout=60, tries=3):
+    """GET a page. If the site shows its rate-limit challenge instead, back off and retry;
+    the challenge is never solved or bypassed."""
+    for k in range(tries):
+        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            final, page = r.geturl(), r.read().decode("utf-8", "ignore")
+        if not ("window.location.reload" in page[:3000] and len(page) < 30000):
+            return final, page
+        time.sleep(60 * (k + 1))
+    raise Challenged(url)
+
+def lines_of(page):
+    s = re.sub(r"<script.*?</script>|<style.*?</style>", "", page, flags=re.S)
+    return [l.strip() for l in html.unescape(re.sub(r"<[^>]+>", "\n", s)).split("\n") if l.strip()]
+
+def sitemap_urls(index_url, keep):
+    """{url: lastmod} for every URL matching `keep` in a sitemap or sitemap index."""
+    out = {}
+    _, s = fetch(index_url)
+    time.sleep(2)
+    if "<sitemapindex" in s:
+        for sub in re.findall(r"<loc>\s*(?:<!\[CDATA\[)?([^<\]\s]+)", s):
+            if re.search(r"propert|land|house|post-sitemap|sitemap\d*\.xml", sub) and "page-sitemap" not in sub:
+                out.update(sitemap_urls(sub, keep)); time.sleep(1)
+        return out
+    for blk in re.findall(r"<url>.*?</url>", s, re.S):
+        loc = re.search(r"<loc>\s*(?:<!\[CDATA\[)?([^<\]\s]+)", blk)
+        mod = re.search(r"<lastmod>\s*(?:<!\[CDATA\[)?([^<\]\s]+)", blk)
+        if loc and keep(loc.group(1)):
+            out[html.unescape(loc.group(1))] = mod.group(1)[:10] if mod else ""
+    return out
+
+def clean(s):
+    return PHONE.sub("", s or "").strip(" -,:|") or None
+
+def scrub(obj):
+    """Remove phone numbers from every string in a record (keys included), except the source URL."""
+    if isinstance(obj, dict):
+        return {(scrub(k) if isinstance(k, str) else k): (v if k == "url" else scrub(v)) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [scrub(v) for v in obj]
+    return PHONE.sub("", obj).strip() if isinstance(obj, str) else obj
+
+# ---------------------------------------------------------------- basobaas.com
+BB_KEYS = ("Land Area", "Road Access In Feet", "Road Type", "Built Year", "Built Up Area", "Property Face", "Total Floors")
+
+def parse_basobaas(url, final, page):
+    if "/property/" not in final:          # sold / withdrawn: redirects to the search page
+        return {"gone": True}
+    L = lines_of(page)
+    rec = {}
+    try:
+        k = L.index("Like")                # "... <category> <Sale|Rent> Like Share <title> <address> ..."
+    except ValueError:
+        return {"gone": True}
+    rec["category"], rec["purpose"] = L[k - 2], L[k - 1]
+    rec["title"], rec["address"] = clean(L[k + 2]), clean(L[k + 3])
+    head = L[k + 3:k + 40]
+    for x in head:
+        m = re.fullmatch(r"(\d+(?:\.\d+)?)\s+(Bedroom|Bathroom|Floors)", x)
+        if m:
+            rec[m.group(2).lower()] = float(m.group(1))
+    pi = next((i for i, x in enumerate(head) if x.startswith("Rs.")), None)
+    if pi is not None:
+        rec["price"] = head[pi]
+        nxt = head[pi + 1] if pi + 1 < len(head) else ""
+        rec["price_unit"] = nxt if nxt.lower().startswith("per") else None
+    if "Last updated:" in head:
+        rec["updated"] = head[head.index("Last updated:") + 1]
+    if "Overview" in L:
+        o = len(L) - 1 - L[::-1].index("Overview")
+        for i in range(o + 1, min(o + 40, len(L) - 1)):
+            if L[i] == "Description":
+                break
+            if L[i] in BB_KEYS:
+                rec[L[i]] = L[i + 1]
+    return rec
+
+# ---------------------------------------------------- nepalpropertybazaar.com (Houzez)
+NPB_KEYS = {"Price", "Land Area", "Property Size", "Property Type", "Property Status", "Bedroom", "Bedrooms",
+            "Bathroom", "Bathrooms", "Floors", "Floor", "Road Access", "Road Size", "Year Built", "Built Year", "Facing"}
+
+def parse_npb(url, final, page):
+    if "/property/" not in final:
+        return {"gone": True}
+    L = lines_of(page)
+    rec = {}
+    m = re.search(r"<title>(.*?)</title>", page, re.S)
+    rec["title"] = clean(html.unescape(m.group(1)).replace(" - Nepal Property Bazaar", "").strip()) if m else None
+    if "Details" in L:
+        d = L.index("Details")
+        if d + 1 < len(L) and L[d + 1].startswith("Updated on"):
+            rec["updated"] = L[d + 1].replace("Updated on", "").split(" at ")[0].strip()
+        for i in range(d + 1, min(d + 40, len(L) - 1)):
+            if L[i] in ("Features", "Address", "Mortgage Calculator"):
+                break
+            if L[i] in NPB_KEYS:
+                rec[L[i].lower().replace(" ", "_")] = L[i + 1]
+    for key in ("Address:", "City:", "Area:", "State/county:", "Zip/Postal Code:"):
+        if key in L:
+            rec[key.rstrip(":").lower().split("/")[0]] = clean(L[L.index(key) + 1])
+    m = re.search(r"latitude&quot;:&quot;(-?[\d.]+)&quot;,&quot;longitude&quot;:&quot;(-?[\d.]+)", page)
+    if m:
+        rec["lat"], rec["lon"] = round(float(m.group(1)), 5), round(float(m.group(2)), 5)
+    m = re.search(r'"datePublished":"([^"]+)"', page)
+    rec["published"] = m.group(1)[:10] if m else None
+    # Road width and floors are often only in the description; keep the numbers, not the text.
+    desc = " ".join(L[L.index("Description") + 1:L.index("Details")]) if "Description" in L and "Details" in L else ""
+    m = re.search(r"(\d{1,2})\s*(?:ft|feet|fit)\b[^.#]{0,25}?(?:road|bato|access|pitch|black)", desc, re.I) or \
+        re.search(r"road[^.#\d]{0,20}(\d{1,2})\s*(?:ft|feet|fit)", desc, re.I)
+    if m:
+        rec["road_ft"] = float(m.group(1))
+    m = re.search(r"(\d(?:\.\d)?)\s*(?:storey|story|storied|floors?|tale)\b", desc, re.I)
+    if m:
+        rec["storeys"] = float(m.group(1))
+    if not rec.get("land_area"):
+        m = re.search(r"(?:land|area|size)[^#:]{0,15}:\s*([\d.]+\s*(?:ropani|aana|ana|anna|paisa|dhur|kattha|katha|bigha)[^#]{0,30})", desc, re.I)
+        if m:
+            rec["land_area_desc"] = m.group(1).strip()
+    return rec
+
+# ------------------------------------------------------------------ gharghaderi.com
+GG_KEYS = {"District :", "Muncipality :", "Municipality :", "VDC :", "Ward No :", "Tole :", "Land area :", "Road size :",
+           "Direction :", "Date :", "Status :", "Floor :", "Floors :", "No of floor :", "Bedroom :", "Bathroom :",
+           "Built Year :", "Price Rs :"}
+
+def parse_gharghaderi(url, final, page):
+    L = lines_of(page)
+    if "Property Details" not in L:
+        return {"gone": True}
+    rec = {"kind": url.split("/")[3]}
+    m = re.search(r"<title>(.*?)</title>", page, re.S)
+    rec["title"] = clean(html.unescape(m.group(1)).split("|")[0].split(" - Ghar")[0].strip()) if m else None
+    owner = L.index("Owner Information") if "Owner Information" in L else -1
+    loc = L.index("Location") if "Location" in L else 0
+    for i in range(loc, len(L) - 1):
+        if owner <= i < loc:               # never read the owner block
+            continue
+        if L[i] in GG_KEYS and L[i + 1] not in GG_KEYS and L[i + 1] not in ("Property Details", "Location", "Owner Information"):
+            rec[L[i].rstrip(" :").lower().replace(" ", "_")] = clean(L[i + 1])
+    # Headline price, e.g. "रु." "18,00,000" "Per Aana".
+    for i, x in enumerate(L[:200]):
+        if x in ("रु.", "रू.", "Rs.") and i + 1 < len(L) and re.fullmatch(r"[\d,]+", L[i + 1]):
+            rec["price"] = L[i + 1]
+            if i + 2 < len(L) and L[i + 2].lower().startswith("per "):
+                rec["price_unit"] = L[i + 2]
+            break
+    return rec
+
+SITES = {
+    "basobaas": ("https://basobaas.com/sitemap.xml", lambda u: "/property/" in u and not re.search(r"rent|lease|hostel|office|shutter|space|room-|bhk", u.lower()), parse_basobaas),
+    "npb": ("https://nepalpropertybazaar.com/sitemap.xml", lambda u: "/property/" in u and not re.search(r"rent|room|shutter|space|hostel|office", u.lower()), parse_npb),
+    "gharghaderi": ("https://www.gharghaderi.com/sitemap.xml", lambda u: re.search(r"gharghaderi\.com/(land|house|land-for-sale|house-for-sale)/\d+", u) is not None and not re.search(r"rent|lease|room|flat|office", u.lower()), parse_gharghaderi),
+}
+
+def load_state(path):
+    state = {}
+    if os.path.exists(path):
+        for l in open(path):
+            r = json.loads(l)
+            state[r["url"]] = r
+    return state
+
+def crawl(name, budget_s, max_pages, delay):
+    index, keep, parse = SITES[name]
+    path = os.path.join(RAW, f"{name}.jsonl")
+    state = load_state(path)
+    urls = sitemap_urls(index, keep)
+    todo = [u for u, mod in urls.items() if u not in state or (mod and mod > (state[u].get("lastmod") or ""))]
+    # Newest first, so a time-limited run always picks up the latest listings.
+    todo.sort(key=lambda u: urls[u], reverse=True)
+    if max_pages:
+        todo = todo[:max_pages]
+    print(f"{name}: {len(urls)} in sitemap, {len(state)} known, {len(todo)} to fetch", file=sys.stderr, flush=True)
+    t0, n, out = time.time(), 0, open(path, "a")
+    for u in todo:
+        if time.time() - t0 > budget_s:
+            print(f"{name}: time budget reached", file=sys.stderr); break
+        try:
+            final, page = fetch(u)
+            rec = parse(u, final, page)
+        except Challenged:
+            print(f"{name}: site keeps rate-limiting us; stopping this run", file=sys.stderr); break
+        except Exception as e:
+            if "404" in str(e) or "410" in str(e):
+                rec = {"gone": True}
+            else:
+                print("ERR", u, e, file=sys.stderr, flush=True); time.sleep(delay); continue
+        rec.update(url=u, lastmod=urls[u], fetched=str(date.today()))
+        out.write(json.dumps(scrub(rec), ensure_ascii=False) + "\n"); out.flush()
+        n += 1
+        if n % 200 == 0:
+            print(f"{name}: {n}/{len(todo)}", file=sys.stderr, flush=True)
+        time.sleep(delay)
+    out.close()
+    print(f"{name}: fetched {n}", file=sys.stderr)
+    return n
+
+def compact(name):
+    """Keep only the newest record per URL."""
+    path = os.path.join(RAW, f"{name}.jsonl")
+    state = load_state(path)
+    with open(path, "w") as f:
+        for r in state.values():
+            f.write(json.dumps(scrub(r), ensure_ascii=False) + "\n")
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("sites", nargs="+", choices=list(SITES))
+    ap.add_argument("--budget-min", type=float, default=40, help="stop each site after this many minutes")
+    ap.add_argument("--max", type=int, default=0, help="fetch at most this many pages per site (0 = all)")
+    ap.add_argument("--delay", type=float, default=1.0, help="seconds between requests to a site")
+    a = ap.parse_args()
+    os.makedirs(RAW, exist_ok=True)
+    for s in a.sites:
+        crawl(s, a.budget_min * 60, a.max, a.delay)
+        compact(s)

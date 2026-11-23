@@ -12,9 +12,10 @@ from sklearn.linear_model import RidgeCV
 from sklearn.model_selection import KFold, cross_val_predict
 from places import TERAI
 
-COLLECTED = "October–November 2026"
+from datetime import date
+COLLECTED = date.today().strftime("%-d %B %Y")
 
-df = pd.read_csv("property.csv")
+df = pd.read_csv("property_listings.csv")
 df = df[(df.price_npr > 5e5) & (df.area_aana >= 0.5) & (df.area_aana <= 400)].copy()
 # Drop absurd price-per-aana outliers within each district/type (data entry errors, wrong units).
 lp = np.log(df.price_per_aana)

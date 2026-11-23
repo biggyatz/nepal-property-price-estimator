@@ -1,9 +1,13 @@
 # Publishes the in-browser version of the app (web/) to the gh-pages branch on
-# every push to main. GitHub Pages serves that branch.
+# every push to main and after each scheduled data refresh. GitHub Pages serves that branch.
 name: Publish web app to gh-pages
 
 on:
   push:
+    branches: [main]
+  workflow_run:
+    workflows: ["Refresh listings"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -16,9 +20,12 @@ concurrency:
 
 jobs:
   publish:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - name: Push web/ to gh-pages
         working-directory: web
         run: |
