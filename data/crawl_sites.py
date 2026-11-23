@@ -50,9 +50,17 @@ def sitemap_urls(index_url, keep):
     else:
         raise Challenged(index_url)
     if "<sitemapindex" in s:
-        for sub in re.findall(r"<loc>\s*(?:<!\[CDATA\[)?([^<\]\s]+)", s):
-            if re.search(r"propert|land|house|post-sitemap|sitemap\d*\.xml", sub) and "page-sitemap" not in sub:
+        subs = [x for x in re.findall(r"<loc>\s*(?:<!\[CDATA\[)?([^<\]\s]+)", s)
+                if re.search(r"propert|land|house|post-sitemap|sitemap\d*\.xml", x) and "page-sitemap" not in x]
+        for sub in subs:
+            try:
                 out.update(sitemap_urls(sub, keep)); time.sleep(1)
+            except Challenged:
+                # Keep what was read (the index lists the newest files first); the rest next run.
+                print(f"sitemap {sub} rate-limited; continuing with {len(out)} URLs", file=sys.stderr)
+                if not out:
+                    raise
+                break
         return out
     for blk in re.findall(r"<url>.*?</url>", s, re.S):
         loc = re.search(r"<loc>\s*(?:<!\[CDATA\[)?([^<\]\s]+)", blk)
