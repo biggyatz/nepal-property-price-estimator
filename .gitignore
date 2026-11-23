@@ -9,3 +9,4 @@ urls_*.txt
 property.csv
 property_model.json
 property_model_rows.csv
+data/raw/*.sitemap.json

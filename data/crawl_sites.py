@@ -12,7 +12,7 @@ floors, rooms, listing dates and (where the site publishes them) map coordinates
 Seller names, phone numbers, e-mails and free-text descriptions are never stored.
 robots.txt of all four sites allows these pages (checked November 2026).
 """
-import argparse, html, json, os, re, sys, time, urllib.request
+import argparse, html, json, os, re, sys, time, urllib.parse, urllib.request
 from datetime import date
 
 UA = "Mozilla/5.0 (compatible; nepal-property-price-estimator; +https://github.com/biggyatz/nepal-property-price-estimator)"
@@ -26,7 +26,7 @@ def fetch(url, timeout=60, tries=3):
     """GET a page. If the site shows its rate-limit challenge instead, back off and retry;
     the challenge is never solved or bypassed."""
     for k in range(tries):
-        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        req = urllib.request.Request(urllib.parse.quote(url, safe=":/?&=%#+,;@!$'()*~"), headers={"User-Agent": UA})
         with urllib.request.urlopen(req, timeout=timeout) as r:
             final, page = r.geturl(), r.read().decode("utf-8", "ignore")
         if not ("window.location.reload" in page[:3000] and len(page) < 30000):
@@ -326,8 +326,14 @@ def crawl(name, budget_s, max_pages, delay):
     delay = max(delay, MIN_DELAY.get(name, 0))
     path = os.path.join(RAW, f"{name}.jsonl")
     state = load_state(path)
+    # Reuse a sitemap read in the last 6 hours, so an interrupted run resumes straight away.
+    cache = os.path.join(RAW, f"{name}.sitemap.json")
     try:
-        urls = sitemap_urls(index, keep)
+        if os.path.exists(cache) and time.time() - os.path.getmtime(cache) < 6 * 3600:
+            urls = json.load(open(cache))
+        else:
+            urls = sitemap_urls(index, keep)
+            json.dump(urls, open(cache, "w"))
     except Challenged:
         print(f"{name}: sitemap is rate-limited right now; will try on the next run", file=sys.stderr)
         return 0
