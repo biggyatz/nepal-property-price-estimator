@@ -292,13 +292,45 @@ def finalize(rows):
         aana = sqft / AANA
         x.update(price_npr=round(price), area_aana=round(aana, 3), price_per_aana=round(price / aana), title=strip_phones(x["title"]))
         out.append(x)
-    df = pd.DataFrame(out)
+    df = fix_per_aana_quotes(pd.DataFrame(out))
     # The same property is often re-posted on a site under a new URL: keep the newest copy.
     df = df.sort_values("listed", ascending=False)
     df = df.drop_duplicates(subset=["url"]).drop_duplicates(subset=["source", "type", "district", "locality", "price_npr", "area_aana"])
     # Agents cross-post the same property to several portals: exact same place, price and area.
     df = df.drop_duplicates(subset=["type", "district", "locality", "price_npr", "area_aana"])
     return df.sort_values(["source", "listed"]).reset_index(drop=True)
+
+# Sources whose price field is structured (total vs per-unit is explicit), used as the reference.
+STRUCTURED = {"basobaas.com", "nepalhomes.com", "99aana.com", "gharghaderi.com", "gharjagganepal.com", "nepalpropertybazaar.com"}
+
+def fix_per_aana_quotes(df):
+    """Land is usually quoted per aana ("18 lakh" for a 4-aana plot), and free-text sites often
+    store that number as the total. For land whose price per aana is under a quarter of what
+    the structured sites show for the same locality (or district): if the stated price is itself
+    near the going rate for one aana, read it as per aana; otherwise drop the listing."""
+    land = df.type == "Land"
+    ref_src = df[land & df.source.isin(STRUCTURED)]
+    by_loc = ref_src.groupby(["district", "locality"]).price_per_aana.agg(["median", "size"])
+    by_loc = by_loc[by_loc["size"] >= 6]["median"].to_dict()
+    by_dist = ref_src.groupby("district").price_per_aana.median().to_dict()
+    fixed, dropped, keep = 0, 0, []
+    for i, r in df.iterrows():
+        ok = True
+        if r.type == "Land":
+            ref = by_loc.get((r.district, r.locality)) or by_dist.get(r.district)
+            if ref and r.price_per_aana < ref / 4 and r.area_aana >= 1:
+                says_total = re.search(r"\btotal\b|टोटल|कुल\s*मूल्य", str(r.title), re.I)
+                if ref / 2.5 <= r.price_npr <= ref * 2.5 and not says_total:
+                    total = r.price_npr * r.area_aana
+                    df.at[i, "price_npr"] = round(total)
+                    df.at[i, "price_per_aana"] = round(total / r.area_aana)
+                    df.at[i, "price_text"] = f"{r.price_text} (read as per aana)"
+                    fixed += 1
+                else:
+                    ok = False; dropped += 1
+        keep.append(ok)
+    print(f"per-aana quotes: {fixed} re-read as per aana, {dropped} implausible land prices dropped")
+    return df[keep].copy()
 
 def load_jsonl(path):
     return [json.loads(l) for l in open(path)] if os.path.exists(path) else []

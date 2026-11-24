@@ -14,6 +14,13 @@ def area_sqft(text):
     if not text:
         return None
     t = text.lower().replace(",", "").strip(" :–-")
+    # A range of plot sizes ("4 Aana – 6 Aana", "4 to 6 aana"): use the first size.
+    m = re.match(r"(.+?(?:ropani|aana|ana|anna|paisa|dam|daam|dhur|kattha|katha|bigha))\s*(?:–|—|-|to|/|or)\s*\d", t)
+    if m and not re.fullmatch(r"[\d.\s-]+", t):
+        t = m.group(1)
+    m = re.match(r"(\d+(?:\.\d+)?)(?:\s*(?:–|—|-|to)\s*\d+(?:\.\d+)?)+\s*(ropani|aana|ana|anna|dhur|kattha|katha|bigha)\b", t)
+    if m:
+        t = f"{m.group(1)} {m.group(2)}"
     m = re.fullmatch(r"(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)", t)
     if m:
         r, a, p, d = map(float, m.groups())

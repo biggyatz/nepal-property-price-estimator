@@ -28,7 +28,7 @@ def nominatim(q):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     with urllib.request.urlopen(req, timeout=30) as r:
         res = json.load(r)
-    time.sleep(1.1)
+    time.sleep(2.0)
     if not res:
         return None
     lat, lon = float(res[0]["lat"]), float(res[0]["lon"])
