@@ -169,6 +169,10 @@
 84.43017
 ],
 "Bhatkeko Pool|Kathmandu": null,
+"Bhimdhunga|Kathmandu": [
+27.73382,
+85.2234
+],
 "Bhimsengola|Kathmandu": [
 27.69849,
 85.34358
@@ -252,6 +256,10 @@
 "Champi|Lalitpur": [
 27.60557,
 85.31399
+],
+"Chandeshwori|Kathmandu": [
+27.74826,
+85.32487
 ],
 "Chandol|Kathmandu": [
 27.73123,
@@ -646,6 +654,10 @@
 27.66654,
 85.43652
 ],
+"Jagdol|Kathmandu": [
+27.74054,
+85.38361
+],
 "Janakpur Sub|Dhanusha": [
 26.76092,
 85.94269
@@ -673,6 +685,10 @@
 "Jhaukhel|Bhaktapur": [
 27.69358,
 85.43395
+],
+"Jhor|Kathmandu": [
+27.79506,
+85.33032
 ],
 "Jitpufedi|Kathmandu": null,
 "Jorpati|Kathmandu": [
@@ -719,6 +735,7 @@
 85.29266
 ],
 "Kalopool|Kathmandu": null,
+"Kamal Gaun Palika|Jhapa": null,
 "Kamalbinayak|Bhaktapur": [
 27.67957,
 85.44272
@@ -735,7 +752,20 @@
 27.73421,
 85.35732
 ],
+"Karyabinayak|Lalitpur": [
+27.63477,
+85.3023
+],
+"Kathmandu Dahachowk|Kathmandu": null,
+"Kathmandu Indreni|Kathmandu": null,
+"Kathmandu Jagdol|Kathmandu": null,
+"Kathmandu Kageshwori|Kathmandu": [
+27.7104,
+85.37586
+],
 "Kathmandu Metropolis|Kathmandu": null,
+"Kathmandu Shankarpur|Kathmandu": null,
+"Kathmandu University Najikai|Kathmandu": null,
 "Katunje|Bhaktapur": [
 27.66528,
 85.4026
@@ -743,6 +773,10 @@
 "Kausaltar|Bhaktapur": [
 27.67458,
 85.3643
+],
+"Kavrepalanchok District|Kavrepalanchok": [
+27.62795,
+85.52345
 ],
 "Kavresthali|Kathmandu": [
 27.78476,
@@ -756,9 +790,17 @@
 27.57144,
 84.53828
 ],
+"Kharibot|Kathmandu": [
+27.65261,
+85.27979
+],
 "Kharipati|Bhaktapur": [
 27.70274,
 85.47072
+],
+"Khokana|Lalitpur": [
+27.63589,
+85.29903
 ],
 "Khumaltar|Lalitpur": [
 27.65367,
@@ -780,6 +822,19 @@
 27.67577,
 85.27293
 ],
+"Kuleshwor|Kathmandu": [
+27.69106,
+85.3002
+],
+"Kupandole|Lalitpur": [
+27.68433,
+85.31621
+],
+"Kupondole|Lalitpur": [
+27.68536,
+85.31843
+],
+"Kusadevi|Kavrepalanchok": null,
 "Kusunti|Lalitpur": [
 27.66311,
 85.31528
@@ -788,11 +843,16 @@
 27.71941,
 85.31516
 ],
+"Lalitpur Lele|Lalitpur": [
+27.56568,
+85.31587
+],
 "Lalitpur Metropolis|Lalitpur": null,
 "Lamatar|Lalitpur": [
 27.63296,
 85.39002
 ],
+"Lasuntar|Kathmandu": null,
 "Lazimpat|Kathmandu": [
 27.72151,
 85.32076
@@ -804,6 +864,10 @@
 "Lele|Lalitpur": [
 27.57204,
 85.33034
+],
+"Likhu|Nuwakot": [
+27.88715,
+85.21683
 ],
 "Lokanthali|Bhaktapur": [
 27.6742,
@@ -817,7 +881,12 @@
 27.64348,
 85.3715
 ],
+"Lubu|Kathmandu": null,
 "Machapokhari|Kathmandu": [
+27.73575,
+85.30462
+],
+"Machhapokhari|Kathmandu": [
 27.73575,
 85.30462
 ],
@@ -829,10 +898,20 @@
 27.67865,
 85.3983
 ],
+"Madhyapur Thimi|Kathmandu": null,
+"Mahalaxmisthan|Lalitpur": [
+27.6675,
+85.3214
+],
+"Mahalaxmi|Kathmandu": [
+27.67178,
+85.28465
+],
 "Mahalaxmi|Lalitpur": [
 27.64348,
 85.3715
 ],
+"Mahamanjushree Nagarkot|Bhaktapur": null,
 "Mahankal|Kathmandu": [
 27.73612,
 85.34739
@@ -841,10 +920,15 @@
 27.72821,
 85.32455
 ],
+"Maitidevi|Kathmandu": [
+27.70512,
+85.33356
+],
 "Makalbari|Kathmandu": [
 27.73077,
 85.38494
 ],
+"Maligaon|Kathmandu": null,
 "Manahari|Makwanpur": [
 27.54075,
 84.80556
@@ -853,13 +937,42 @@
 27.71624,
 85.31275
 ],
+"Manbhawan|Lalitpur": [
+27.67168,
+85.31663
+],
+"Mandikatar|Kathmandu": null,
 "Mandikhatar|Kathmandu": [
 27.73631,
 85.34778
 ],
+"Manohara Steel Brg|Kathmandu": null,
 "Matatirtha|Kathmandu": [
 27.67494,
 85.23699
+],
+"Meghauli|Chitwan": [
+27.58123,
+84.23486
+],
+"Mehpi Ajima Temple|Kathmandu": null,
+"Mhaipi|Kathmandu": null,
+"Mid Baneshwor|Kathmandu": null,
+"Minbhawan|Kathmandu": [
+27.68525,
+85.33801
+],
+"Mithila Bihari|Dhanusha": [
+26.79667,
+86.01156
+],
+"Mitranagar Marg|Kathmandu": [
+27.73308,
+85.30932
+],
+"Mitranagar|Kathmandu": [
+27.73308,
+85.30932
 ],
 "Mulpani|Kathmandu": [
 27.70964,
@@ -869,6 +982,19 @@
 27.71748,
 85.26931
 ],
+"Nagarkot|Bhaktapur": [
+27.71844,
+85.51911
+],
+"Nagdaha|Lalitpur": [
+27.62187,
+85.3371
+],
+"Nagpokhari Marg|Kathmandu": [
+27.71349,
+85.32437
+],
+"Naikap Naya Bhanjyang|Kathmandu": null,
 "Naikap|Kathmandu": [
 27.69142,
 85.2667
@@ -877,6 +1003,7 @@
 27.65039,
 85.32076
 ],
+"Nakhudole|Lalitpur": null,
 "Nakkhu|Lalitpur": [
 27.62341,
 85.3066
@@ -885,6 +1012,7 @@
 27.55627,
 85.63455
 ],
+"Namobudha|Kathmandu": null,
 "Nangkhel|Bhaktapur": null,
 "Narayantar|Kathmandu": [
 27.72144,
@@ -894,6 +1022,10 @@
 27.76827,
 85.37337
 ],
+"National Kidney Center|Kathmandu": [
+27.7246,
+85.29578
+],
 "Naubise|Dhading": [
 27.7171,
 85.15175
@@ -902,6 +1034,12 @@
 27.71268,
 85.3287
 ],
+"Naya Bazar|Kathmandu": [
+27.67708,
+85.28195
+],
+"Nayabasti|Lalitpur": null,
+"Nayabuspark|Kathmandu": null,
 "Nayapati|Kathmandu": [
 27.74486,
 85.40961
@@ -918,6 +1056,10 @@
 27.68991,
 85.33566
 ],
+"New Buspark|Kathmandu": [
+27.73517,
+85.30599
+],
 "New|Kathmandu": [
 27.69373,
 85.33666
@@ -927,6 +1069,14 @@
 85.39601
 ],
 "Ochu|Lalitpur": null,
+"Old Baneshwor|Kathmandu": [
+27.69066,
+85.336
+],
+"Paknajol|Kathmandu": [
+27.71555,
+85.30846
+],
 "Palungtar|Gorkha": [
 28.01212,
 84.51884
@@ -951,6 +1101,10 @@
 27.77327,
 85.35243
 ],
+"Pathari Shanishchare|Morang": [
+26.6102,
+87.56155
+],
 "Pathari|Morang": [
 26.65719,
 87.56118
@@ -964,10 +1118,28 @@
 27.61164,
 85.26701
 ],
+"Phutung|Kathmandu": [
+27.75335,
+85.30795
+],
+"Pokhara Metropolis|Kaski": null,
 "Pokhara|Kaski": [
 28.20954,
 83.9914
 ],
+"Pulchowk|Lalitpur": [
+27.67608,
+85.31571
+],
+"Purano Naikap|Kathmandu": [
+27.69398,
+85.26035
+],
+"Putalisadak|Kathmandu": [
+27.70739,
+85.3224
+],
+"Rabi Bhawan|Kathmandu": null,
 "Ramgram|Nawalparasi": [
 27.52708,
 83.64807
@@ -975,6 +1147,11 @@
 "Ramkot|Kathmandu": [
 27.72086,
 85.25218
+],
+"Rampur Bazar|Chitwan": null,
+"Raniban Rd|Kathmandu": [
+27.73297,
+85.29025
 ],
 "Raniban|Kathmandu": [
 27.74991,
@@ -1012,6 +1189,7 @@
 27.73542,
 85.32214
 ],
+"Sanagaun|Lalitpur": null,
 "Sanagau|Lalitpur": [
 27.65088,
 85.35523
@@ -1019,6 +1197,10 @@
 "Sanepa|Lalitpur": [
 27.68454,
 85.30659
+],
+"Sangla|Kathmandu": [
+27.79001,
+85.319
 ],
 "Sankhu|Kathmandu": [
 27.72652,
@@ -1028,6 +1210,8 @@
 27.72092,
 85.28922
 ],
+"Sanobharayang|Kathmandu": null,
+"Sanobharyang Rd|Kathmandu": null,
 "Sanothimi|Bhaktapur": [
 27.6885,
 85.37842
@@ -1040,14 +1224,31 @@
 27.68069,
 85.24487
 ],
+"Select District|Lalitpur": null,
 "Setipakha|Lalitpur": null,
+"Shankhamul|Kathmandu": [
+27.68348,
+85.33332
+],
 "Shankharapur|Kathmandu": [
 27.73066,
 85.4662
 ],
+"Shantinagar|Kathmandu": [
+27.6942,
+85.33705
+],
 "Shital|Lalitpur": [
 27.64977,
 85.32247
+],
+"Shivapuri|Nuwakot": [
+27.8538,
+85.36746
+],
+"Shivasatakshi|Jhapa": [
+26.61052,
+87.81857
 ],
 "Siddhipur|Lalitpur": [
 27.64737,
@@ -1081,6 +1282,18 @@
 27.70451,
 85.28197
 ],
+"Sorhakhutte|Kathmandu": [
+27.71884,
+85.3096
+],
+"Srijananagar|Bhaktapur": [
+27.67294,
+85.40395
+],
+"Subedi Gau|Kathmandu": [
+27.73927,
+85.43248
+],
 "Sudal|Bhaktapur": [
 27.67697,
 85.48032
@@ -1093,13 +1306,30 @@
 27.63302,
 85.31802
 ],
+"Sundar Haraicha|Morang": [
+26.65895,
+87.31707
+],
+"Sundarbasti|Kathmandu": null,
 "Sundarijal|Kathmandu": [
 27.75801,
 85.41919
 ],
+"Sundhara|Kathmandu": [
+27.70008,
+85.31298
+],
+"Suntol|Kathmandu": [
+27.72417,
+85.47918
+],
 "Suryabinayak|Bhaktapur": [
 27.66755,
 85.40341
+],
+"Suryabinayak|Kathmandu": [
+27.70007,
+85.34858
 ],
 "Swayambhu|Kathmandu": [
 27.71581,
@@ -1117,6 +1347,11 @@
 27.69976,
 85.29416
 ],
+"Tarakeshwar|Kathmandu": [
+27.76466,
+85.30007
+],
+"Tarkeshwor Mandir Marg|Kathmandu": null,
 "Tarkeshwor|Kathmandu": [
 27.79277,
 85.30835
@@ -1125,6 +1360,14 @@
 27.6654,
 85.46718
 ],
+"Taukhel|Lalitpur": [
+27.61151,
+85.35753
+],
+"Teku|Kathmandu": [
+27.69524,
+85.3034
+],
 "Tempo Park|Lalitpur": [
 27.65528,
 85.3518
@@ -1132,6 +1375,10 @@
 "Thaiba|Lalitpur": [
 27.62339,
 85.34869
+],
+"Thakre|Dhading": [
+27.73744,
+85.0636
 ],
 "Thali|Kathmandu": [
 27.7271,
@@ -1146,6 +1393,14 @@
 27.69029,
 85.21558
 ],
+"Thapagaun|Kathmandu": [
+27.6928,
+85.27751
+],
+"Thasikhel|Lalitpur": [
+27.66623,
+85.31623
+],
 "Thecho|Lalitpur": [
 27.61413,
 85.32067
@@ -1155,6 +1410,11 @@
 85.3864
 ],
 "Thulobharyang|Kathmandu": null,
+"Tikabhairab|Lalitpur": [
+27.57459,
+85.31211
+],
+"Tikathali|Kathmandu": null,
 "Tikathali|Lalitpur": [
 27.65803,
 85.36104
@@ -1162,6 +1422,10 @@
 "Tilottama|Rupandehi": [
 27.62148,
 83.4635
+],
+"Tinchuli|Kathmandu": [
+27.72727,
+85.36829
 ],
 "Tinkune|Kathmandu": [
 27.68521,
@@ -1171,10 +1435,16 @@
 27.68811,
 85.26987
 ],
+"Tokha Panchetar|Kathmandu": null,
 "Tokha|Kathmandu": [
 27.74557,
 85.32643
 ],
+"Tusal Marg|Kathmandu": [
+27.72133,
+85.35813
+],
+"Un Pk Marg|Lalitpur": null,
 "Urlabari|Morang": [
 26.66379,
 87.63806
@@ -1249,6 +1519,10 @@
 27.66585,
 85.32243
 ],
+"|Lamjung": [
+28.22908,
+84.37913
+],
 "|Mahottari": [
 26.64729,
 85.7983
@@ -1300,5 +1574,9 @@
 "|Udayapur": [
 26.80139,
 86.69611
+],
+"झापा दमक|Jhapa": [
+26.65817,
+87.70125
 ]
 }
