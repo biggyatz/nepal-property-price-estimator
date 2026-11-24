@@ -151,6 +151,7 @@
 27.65617,
 85.30604
 ],
+"Bhaisipati|Lalitpur": null,
 "Bhakundebesi|Kavrepalanchok": [
 27.56188,
 85.64202
@@ -228,6 +229,10 @@
 "Buddhanagar|Kathmandu": [
 27.68821,
 85.32874
+],
+"Buddhashanti|Jhapa": [
+26.73986,
+88.06841
 ],
 "Budhanilkantha|Kathmandu": [
 27.77813,
@@ -337,6 +342,10 @@
 "Chitwan District|Chitwan": [
 27.68123,
 84.43318
+],
+"Chobhar|Kathmandu": [
+27.66604,
+85.29127
 ],
 "Chulachuli|Jhapa": [
 26.74664,
@@ -1161,6 +1170,10 @@
 27.73079,
 85.32095
 ],
+"Ranipauwa|Nuwakot": [
+27.83252,
+85.23886
+],
 "Rapti|Chitwan": [
 27.6495,
 84.66141
@@ -1209,6 +1222,10 @@
 "Sano Bharyang|Kathmandu": [
 27.72092,
 85.28922
+],
+"Sano Khokana|Lalitpur": [
+27.6439,
+85.29392
 ],
 "Sanobharayang|Kathmandu": null,
 "Sanobharyang Rd|Kathmandu": null,
@@ -1347,6 +1364,7 @@
 27.69976,
 85.29416
 ],
+"Tarakeshor|Kathmandu": null,
 "Tarakeshwar|Kathmandu": [
 27.76466,
 85.30007
@@ -1460,6 +1478,10 @@
 "|Bara": [
 27.03177,
 85.01222
+],
+"|Bardiya": [
+28.20282,
+81.34733
 ],
 "|Bhaktapur": [
 27.67894,
