@@ -110,6 +110,10 @@
 27.74607,
 85.34277
 ],
+"Bardaghat|Nawalparasi": [
+27.55146,
+83.79931
+],
 "Bardibas|Mahottari": [
 26.99044,
 85.89331
@@ -206,6 +210,10 @@
 27.72178,
 85.33556
 ],
+"Bmc|Bhaktapur": [
+27.66902,
+85.42156
+],
 "Bode|Bhaktapur": [
 27.68789,
 85.38499
@@ -254,6 +262,7 @@
 27.71718,
 85.34666
 ],
+"Chahare|Nuwakot": null,
 "Chamati|Kathmandu": [
 27.71891,
 85.29624
@@ -385,6 +394,10 @@
 26.66501,
 87.70115
 ],
+"Damauli|Tanahun": [
+27.98283,
+84.26558
+],
 "Danchhi|Kathmandu": [
 27.73624,
 85.41553
@@ -401,6 +414,10 @@
 "Devghat|Tanahun": [
 27.8105,
 84.3671
+],
+"Dhading Besi|Dhading": [
+27.9116,
+84.89312
 ],
 "Dhaneshwor|Kathmandu": [
 27.68446,
@@ -765,6 +782,10 @@
 27.63477,
 85.3023
 ],
+"Katheri|Nuwakot": [
+27.80247,
+85.32715
+],
 "Kathmandu Dahachowk|Kathmandu": null,
 "Kathmandu Indreni|Kathmandu": null,
 "Kathmandu Jagdol|Kathmandu": null,
@@ -799,6 +820,7 @@
 27.57144,
 84.53828
 ],
+"Kharibhanjyang|Nuwakot": null,
 "Kharibot|Kathmandu": [
 27.65261,
 85.27979
@@ -891,6 +913,10 @@
 85.3715
 ],
 "Lubu|Kathmandu": null,
+"Lumbini|Rupandehi": [
+27.48231,
+83.27775
+],
 "Machapokhari|Kathmandu": [
 27.73575,
 85.30462
@@ -956,6 +982,10 @@
 85.34778
 ],
 "Manohara Steel Brg|Kathmandu": null,
+"Manohara|Kathmandu": [
+27.67583,
+85.33773
+],
 "Matatirtha|Kathmandu": [
 27.67494,
 85.23699
@@ -982,6 +1012,10 @@
 "Mitranagar|Kathmandu": [
 27.73308,
 85.30932
+],
+"Mulabari|Nuwakot": [
+27.86577,
+85.35342
 ],
 "Mulpani|Kathmandu": [
 27.70964,
@@ -1031,6 +1065,7 @@
 27.76827,
 85.37337
 ],
+"Narayanthan|Nuwakot": null,
 "National Kidney Center|Kathmandu": [
 27.7246,
 85.29578
@@ -1078,6 +1113,10 @@
 85.39601
 ],
 "Ochu|Lalitpur": null,
+"Okharpauwa|Nuwakot": [
+27.7884,
+85.23579
+],
 "Old Baneshwor|Kathmandu": [
 27.69066,
 85.336
@@ -1364,6 +1403,10 @@
 27.69976,
 85.29416
 ],
+"Tansen|Palpa": [
+27.86637,
+83.54691
+],
 "Tarakeshor|Kathmandu": null,
 "Tarakeshwar|Kathmandu": [
 27.76466,
@@ -1558,6 +1601,10 @@
 "|Nuwakot": [
 27.91393,
 85.14208
+],
+"|Palpa": [
+27.86548,
+83.5363
 ],
 "|Parsa": [
 27.03084,
