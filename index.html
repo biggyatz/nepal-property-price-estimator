@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nepal Property Price Estimator</title>
+<meta name="description" content="Estimate the asking price of a house or land in Nepal from real listings: Kathmandu Valley, Pokhara, Chitwan, Butwal, Itahari, Birtamod and beyond.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Real estate · Nepal</p>
+    <h1>What is this property worth?</h1>
+    <p class="lead">Estimate the asking price of a house or plot of land in Nepal from <span id="lead-n">thousands of</span> real listings, see the likely range, and compare against similar properties on the market.</p>
+    <div class="kpis" id="kpis"></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="layout">
+    <section class="card" aria-labelledby="in-title">
+      <h2 id="in-title">Property details</h2>
+      <p class="sub">The estimate updates as you type.</p>
+      <div class="field"><span>Property type</span><div class="seg" id="type" role="radiogroup" aria-label="Property type"></div></div>
+      <label class="field"><span>District</span><select id="district"></select></label>
+      <label class="field"><span>Area / locality</span><select id="locality"></select></label>
+      <div class="field">
+        <span>Land area</span>
+        <div class="area-inputs" id="area-rapd">
+          <label>Ropani<input type="number" min="0" step="1" id="a-r" value="0"></label>
+          <label>Aana<input type="number" min="0" step="1" id="a-a" value="4"></label>
+          <label>Paisa<input type="number" min="0" max="3" step="1" id="a-p" value="0"></label>
+          <label>Dam<input type="number" min="0" max="3" step="1" id="a-d" value="0"></label>
+        </div>
+        <div class="area-inputs" id="area-bkd" hidden>
+          <label>Bigha<input type="number" min="0" step="1" id="b-b" value="0"></label>
+          <label>Kattha<input type="number" min="0" step="1" id="b-k" value="0"></label>
+          <label>Dhur<input type="number" min="0" step="1" id="b-d" value="12"></label>
+        </div>
+        <div class="hint" id="area-hint"></div>
+      </div>
+      <div class="field"><span id="road-l">Road access</span><div class="range-row"><input type="range" min="6" max="30" step="1" value="13" id="road" aria-labelledby="road-l"><output id="road-o">13 ft</output></div></div>
+      <div class="field" id="storey-field"><span id="st-l">Storeys</span><div class="range-row"><input type="range" min="1" max="5" step="0.5" value="2.5" id="storeys" aria-labelledby="st-l"><output id="st-o">2.5</output></div></div>
+    </section>
+
+    <section class="card" aria-labelledby="out-title">
+      <h2 id="out-title">Estimated asking price</h2>
+      <div class="hero" aria-live="polite"><span class="big" id="price">–</span></div>
+      <div class="meta" id="meta"></div>
+      <div class="chart" id="range-chart"></div>
+      <h3 style="margin:22px 0 0;font-size:1rem">Similar listings</h3>
+      <p class="sub" id="comps-sub">Closest matches by place, type and size.</p>
+      <div class="comps" id="comps"></div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="map-title">
+    <div class="card-head">
+      <div>
+        <h2 id="map-title">Prices across Nepal</h2>
+        <p class="sub" id="map-sub">Each circle is an area: darker means a higher median asking price per aana, bigger means more listings. Switch to the heatmap to see where listings cluster.</p>
+      </div>
+      <button class="ghost" data-table-toggle="map">Show table</button>
+    </div>
+    <div class="controls">
+      <div class="chips" id="map-type" role="radiogroup" aria-label="Property type"></div>
+      <div class="chips" id="map-layer" role="radiogroup" aria-label="Map layer"></div>
+      <div class="chips" id="map-period" role="radiogroup" aria-label="Listing period"></div>
+      <label class="select" id="map-site-wrap" hidden><span>Site</span><select id="map-site"></select></label>
+    </div>
+    <div class="map" id="map" role="region" aria-label="Map of asking prices per aana by area"></div>
+    <div class="legend map-legend" id="map-legend"></div>
+    <p class="note" id="map-note"></p>
+    <div class="table-view" id="map-table" hidden></div>
+  </section>
+
+  <section class="card" aria-labelledby="lst-title">
+    <div class="card-head">
+      <div>
+        <h2 id="lst-title">All listings</h2>
+        <p class="sub" id="lst-sub">Every listing behind the estimates, with the site it came from. Click a title to open the original listing, or “Map” to see where it is.</p>
+      </div>
+    </div>
+    <div class="controls">
+      <label class="select grow"><span>Search</span><input type="search" id="lst-q" placeholder="Title, locality or town"></label>
+      <label class="select"><span>Site</span><select id="lst-site"></select></label>
+      <label class="select"><span>District</span><select id="lst-district"></select></label>
+      <label class="select"><span>Type</span><select id="lst-type"><option value="">House and land</option><option>House</option><option>Land</option></select></label>
+    </div>
+    <div class="table-view lst-table" id="lst-table"></div>
+    <div class="pager" id="lst-pager"></div>
+  </section>
+
+  <section class="card" aria-labelledby="mkt-title">
+    <div class="card-head">
+      <div>
+        <h2 id="mkt-title">Price per aana by area</h2>
+        <p class="sub" id="mkt-sub">Median asking price per aana, with houses and land shown separately. Areas with at least 4 listings.</p>
+      </div>
+      <button class="ghost" data-table-toggle="mkt">Show table</button>
+    </div>
+    <div class="controls"><div class="chips" id="mkt-type" role="radiogroup" aria-label="Property type"></div><div class="chips" id="mkt-region" role="radiogroup" aria-label="Region"></div></div>
+    <div class="chart" id="mkt-chart"></div>
+    <div class="table-view" id="mkt-table" hidden></div>
+  </section>
+
+  <section class="card" aria-labelledby="hot-title">
+    <div class="card-head">
+      <div>
+        <h2 id="hot-title">Hotspot towns outside the Valley</h2>
+        <p class="sub" id="hot-sub"></p>
+      </div>
+      <button class="ghost" data-table-toggle="hot">Show table</button>
+    </div>
+    <div class="controls"><div class="chips" id="hot-type" role="radiogroup" aria-label="Property type"></div><div class="chips" id="hot-view" role="radiogroup" aria-label="View"></div></div>
+    <div class="chart" id="hot-chart"></div>
+    <div class="map map-sm" id="hot-map" role="region" aria-label="Map of hotspot towns by price per aana" hidden></div>
+    <div class="legend map-legend" id="hot-legend"></div>
+    <p class="insight" id="hot-insight" hidden></p>
+    <div class="table-view" id="hot-table" hidden></div>
+  </section>
+
+  <section class="card" aria-labelledby="about-title">
+    <h2 id="about-title">How this works</h2>
+    <p class="sub" id="about-text"></p>
+    <div class="stats-row" id="model-stats"></div>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p id="sources"></p>
+  <p>Estimates are based on <strong>asking prices</strong>, which are usually above final sale prices, and are not a valuation. <a href="https://github.com/biggyatz/nepal-property-price-estimator">Source, data pipeline and methodology on GitHub</a></p>
+</footer>
+<div class="tooltip" id="tooltip" role="tooltip" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="predict.js"></script>
+<script src="app.js"></script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "fd97ec722df2403296b1214b6654de0b"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
